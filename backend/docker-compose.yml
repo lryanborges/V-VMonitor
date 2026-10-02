@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: vvmonitor-postgres
+    environment:
+      POSTGRES_DB: vvmonitor
+      POSTGRES_USER: vvmonitor
+      POSTGRES_PASSWORD: vvmonitor
+    ports:
+      # 5433 no host porque a 5432 ja esta ocupada pelo PostgreSQL local do Windows
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U vvmonitor -d vvmonitor"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  postgres-data:
