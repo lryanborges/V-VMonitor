@@ -1,6 +1,0 @@
-# Perfil de desenvolvimento local (ativo por padrao)
-jwt:
-  # segredo apenas para desenvolvimento; nunca use em producao
-  secret: ${JWT_SECRET:dev-only-secret-vvmonitor-troque-em-producao-0123456789}
-  # token longo para testes manuais sem precisar refazer login
-  expiration: ${JWT_EXPIRATION:30d}
