@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.vvmonitor.api.controller.UserControllerTest" time="0.946" tests="8" errors="0" skipped="0" failures="0" flakes="0">
+<testsuite xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="https://maven.apache.org/surefire/maven-surefire-plugin/xsd/surefire-test-report.xsd" version="3.0.2" name="com.vvmonitor.infra.security.JwtServiceTest" time="0.151" tests="6" errors="0" skipped="0" failures="0" flakes="0">
   <properties>
     <property name="java.specification.version" value="21"/>
     <property name="sun.cpu.isalist" value="amd64"/>
@@ -65,34 +65,10 @@
     <property name="java.class.version" value="65.0"/>
     <property name="LOGGED_APPLICATION_NAME" value="[vvmonitor-backend] "/>
   </properties>
-  <testcase name="meDevolveOUsuarioDoToken" classname="com.vvmonitor.api.controller.UserControllerTest" time="0.322">
-    <system-out><![CDATA[2026-10-02T00:14:01.611-03:00  INFO 9632 --- [vvmonitor-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.vvmonitor.api.controller.UserControllerTest]: UserControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-10-02T00:14:01.631-03:00  INFO 9632 --- [vvmonitor-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.vvmonitor.VvMonitorApplication for test class com.vvmonitor.api.controller.UserControllerTest
-2026-10-02T00:14:01.633-03:00  INFO 9632 --- [vvmonitor-backend] [           main] t.c.s.AnnotationConfigContextLoaderUtils : Could not detect default configuration classes for test class [com.vvmonitor.api.controller.UserControllerTest]: UserControllerTest does not declare any static, non-private, non-final, nested classes annotated with @Configuration.
-2026-10-02T00:14:01.644-03:00  INFO 9632 --- [vvmonitor-backend] [           main] .b.t.c.SpringBootTestContextBootstrapper : Found @SpringBootConfiguration com.vvmonitor.VvMonitorApplication for test class com.vvmonitor.api.controller.UserControllerTest
-
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
-
- :: Spring Boot ::                (v4.1.1)
-
-2026-10-02T00:14:01.720-03:00  INFO 9632 --- [vvmonitor-backend] [           main] c.v.api.controller.UserControllerTest    : Starting UserControllerTest using Java 21.0.11 with PID 9632 (started by ryanb in C:\Users\ryanb\vscodeprojects\v&vmonitor\backend)
-2026-10-02T00:14:01.720-03:00  INFO 9632 --- [vvmonitor-backend] [           main] c.v.api.controller.UserControllerTest    : No active profile set, falling back to 1 default profile: "dev"
-2026-10-02T00:14:02.051-03:00  INFO 9632 --- [vvmonitor-backend] [           main] o.s.b.t.m.w.SpringBootMockServletContext : Initializing Spring TestDispatcherServlet ''
-2026-10-02T00:14:02.052-03:00  INFO 9632 --- [vvmonitor-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Initializing Servlet ''
-2026-10-02T00:14:02.053-03:00  INFO 9632 --- [vvmonitor-backend] [           main] o.s.t.web.servlet.TestDispatcherServlet  : Completed initialization in 1 ms
-2026-10-02T00:14:02.068-03:00  INFO 9632 --- [vvmonitor-backend] [           main] c.v.api.controller.UserControllerTest    : Started UserControllerTest in 0.407 seconds (process running for 5.962)
-]]></system-out>
-  </testcase>
-  <testcase name="usuarioInexistenteRetorna404" classname="com.vvmonitor.api.controller.UserControllerTest" time="0.022"/>
-  <testcase name="listaUsuariosSemExporSenha" classname="com.vvmonitor.api.controller.UserControllerTest" time="0.026"/>
-  <testcase name="semTokenRetorna401" classname="com.vvmonitor.api.controller.UserControllerTest" time="0.014"/>
-  <testcase name="tokenInvalidoRetorna401" classname="com.vvmonitor.api.controller.UserControllerTest" time="0.016"/>
-  <testcase name="buscaUsuarioPorId" classname="com.vvmonitor.api.controller.UserControllerTest" time="0.015"/>
-  <testcase name="uuidMalformadoRetorna400" classname="com.vvmonitor.api.controller.UserControllerTest" time="0.017"/>
-  <testcase name="tokenDeUsuarioRemovidoRetorna401" classname="com.vvmonitor.api.controller.UserControllerTest" time="0.014"/>
+  <testcase name="lixoNaoEhToken" classname="com.vvmonitor.infra.security.JwtServiceTest" time="0.088"/>
+  <testcase name="tokenAssinadoComOutraChaveEhRejeitado" classname="com.vvmonitor.infra.security.JwtServiceTest" time="0.005"/>
+  <testcase name="tokenExpiradoEhRejeitado" classname="com.vvmonitor.infra.security.JwtServiceTest" time="0.024"/>
+  <testcase name="tokenAdulteradoEhRejeitado" classname="com.vvmonitor.infra.security.JwtServiceTest" time="0.004"/>
+  <testcase name="segredoCurtoImpedeASubida" classname="com.vvmonitor.infra.security.JwtServiceTest" time="0.007"/>
+  <testcase name="tokenEmitidoEValidadoDevolveOUsuario" classname="com.vvmonitor.infra.security.JwtServiceTest" time="0.01"/>
 </testsuite>

@@ -1,6 +1,7 @@
 package com.vvmonitor.api.exception;
 
 import com.vvmonitor.domain.exception.EmailAlreadyRegisteredException;
+import com.vvmonitor.domain.exception.InvalidCredentialsException;
 import com.vvmonitor.domain.exception.UserNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
@@ -8,6 +9,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -47,6 +50,24 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UserNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleNotFound(UserNotFoundException e, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, e.getMessage(), request, List.of());
+    }
+
+    @ExceptionHandler(InvalidCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(InvalidCredentialsException e,
+                                                                  HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, e.getMessage(), request, List.of());
+    }
+
+    /** Requisicao sem token, ou com token invalido/expirado, em rota protegida (RNF1). */
+    @ExceptionHandler(AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthentication(AuthenticationException e,
+                                                              HttpServletRequest request) {
+        return build(HttpStatus.UNAUTHORIZED, "Autenticação necessária. Envie um token válido.", request, List.of());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException e, HttpServletRequest request) {
+        return build(HttpStatus.FORBIDDEN, "Acesso negado.", request, List.of());
     }
 
     @ExceptionHandler(EmailAlreadyRegisteredException.class)
