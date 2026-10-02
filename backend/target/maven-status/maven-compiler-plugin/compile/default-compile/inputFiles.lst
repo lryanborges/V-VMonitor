@@ -1,1 +1,15 @@
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\api\controller\AuthController.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\api\controller\UserController.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\api\dto\request\RegisterUserRequest.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\api\dto\response\UserResponse.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\api\exception\ErrorResponse.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\api\exception\GlobalExceptionHandler.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\config\PasswordEncoderConfig.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\domain\entity\BaseEntity.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\domain\entity\User.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\domain\exception\BusinessException.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\domain\exception\EmailAlreadyRegisteredException.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\domain\exception\UserNotFoundException.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\infra\repository\UserRepository.java
+C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\service\UserService.java
 C:\Users\ryanb\vscodeprojects\v&vmonitor\backend\src\main\java\com\vvmonitor\VvMonitorApplication.java

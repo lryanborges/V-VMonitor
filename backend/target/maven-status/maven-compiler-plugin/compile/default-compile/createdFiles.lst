@@ -1,1 +1,14 @@
+com\vvmonitor\domain\exception\EmailAlreadyRegisteredException.class
+com\vvmonitor\api\exception\ErrorResponse.class
+com\vvmonitor\domain\entity\User.class
+com\vvmonitor\infra\repository\UserRepository.class
+com\vvmonitor\domain\exception\BusinessException.class
+com\vvmonitor\service\UserService.class
+com\vvmonitor\config\PasswordEncoderConfig.class
 com\vvmonitor\VvMonitorApplication.class
+com\vvmonitor\api\controller\AuthController.class
+com\vvmonitor\api\dto\request\RegisterUserRequest.class
+com\vvmonitor\api\exception\GlobalExceptionHandler.class
+com\vvmonitor\domain\entity\BaseEntity.class
+com\vvmonitor\api\dto\response\UserResponse.class
+com\vvmonitor\api\exception\ErrorResponse$FieldError.class
