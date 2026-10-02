@@ -1,7 +1,9 @@
 package com.vvmonitor.api.controller;
 
 import com.vvmonitor.api.dto.response.UserResponse;
+import com.vvmonitor.infra.security.AuthenticatedUser;
 import com.vvmonitor.service.UserService;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,6 +20,12 @@ public class UserController {
 
     public UserController(UserService userService) {
         this.userService = userService;
+    }
+
+    /** Dados do usuario dono do token. */
+    @GetMapping("/me")
+    public UserResponse me(@AuthenticationPrincipal AuthenticatedUser principal) {
+        return userService.findById(principal.id());
     }
 
     @GetMapping
