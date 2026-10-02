@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: com.vvmonitor.service.AuthServiceTest
--------------------------------------------------------------------------------
-Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.665 s -- in com.vvmonitor.service.AuthServiceTest
