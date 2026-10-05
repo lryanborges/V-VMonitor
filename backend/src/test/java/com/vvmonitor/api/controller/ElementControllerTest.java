@@ -11,6 +11,8 @@ import com.vvmonitor.domain.exception.InvalidFieldException;
 import com.vvmonitor.domain.exception.ProjectAccessDeniedException;
 import com.vvmonitor.infra.repository.UserRepository;
 import com.vvmonitor.infra.security.JwtService;
+import com.vvmonitor.api.dto.response.DeleteImpactResponse;
+import com.vvmonitor.service.ElementRemovalService;
 import com.vvmonitor.service.ElementService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,7 +32,10 @@ import static org.hamcrest.Matchers.hasItem;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.verify;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -51,6 +56,9 @@ class ElementControllerTest {
 
     @MockitoBean
     private ElementService elementService;
+
+    @MockitoBean
+    private ElementRemovalService removalService;
 
     @MockitoBean
     private UserRepository userRepository;
@@ -142,5 +150,45 @@ class ElementControllerTest {
                 .andExpect(status().isBadRequest());
         mockMvc.perform(authenticated(get(URL + "/next-code")))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void editaRetorna200() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(elementService.update(eq(PROJECT_ID), eq(id), eq(LOGGED_ID), any())).thenReturn(rf("RF3"));
+
+        mockMvc.perform(authenticated(put(URL + "/" + id)).contentType(MediaType.APPLICATION_JSON).content("""
+                        {"description":"Nova descrição","priority":"OPTIONAL"}
+                        """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.code").value("RF3"));
+    }
+
+    @Test
+    void edicaoSemDescricaoRetorna400() throws Exception {
+        mockMvc.perform(authenticated(put(URL + "/" + UUID.randomUUID())).contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"description\":\"\"}"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.fieldErrors[*].field", hasItem("description")));
+    }
+
+    @Test
+    void impactoDaExclusao() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(removalService.impact(PROJECT_ID, id, LOGGED_ID)).thenReturn(new DeleteImpactResponse(
+                DeleteImpactResponse.ImpactLevel.HIGH, List.of(), List.of(), List.of(), List.of(), 0));
+
+        mockMvc.perform(authenticated(get(URL + "/" + id + "/delete-impact")))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.level").value("HIGH"));
+    }
+
+    @Test
+    void exclusaoRetorna204() throws Exception {
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(authenticated(delete(URL + "/" + id)))
+                .andExpect(status().isNoContent());
+        verify(removalService).delete(PROJECT_ID, id, LOGGED_ID);
     }
 }

@@ -60,6 +60,16 @@ public class Element extends BaseEntity {
         this.createdBy = createdBy;
     }
 
+    /**
+     * RF14: edita descricao e prioridade. Tipo e codigo nao mudam (o codigo identifica o elemento).
+     * A edicao volta a ser uma alteracao pendente: o elemento so aparece atualizado apos nova submissao.
+     */
+    public void update(String description, Priority priority) {
+        this.description = description.strip();
+        this.priority = priority;
+        this.submissionStatus = SubmissionStatus.DRAFT;
+    }
+
     public UUID getProjectId() {
         return projectId;
     }
