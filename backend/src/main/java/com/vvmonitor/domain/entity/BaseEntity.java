@@ -1,27 +1,15 @@
 package com.vvmonitor.domain.entity;
 
 import jakarta.persistence.Column;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.Instant;
-import java.util.UUID;
 
-/**
- * Base das entidades com id UUID, timestamps e soft delete.
- * Cada entidade concreta declara @SQLDelete e @SQLRestriction com o nome da sua tabela,
- * para que delete() marque deleted_at e as consultas ignorem registros removidos.
- */
+/** Base das entidades com id UUID, soft delete e as colunas created_at e updated_at. */
 @MappedSuperclass
-public abstract class BaseEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID id;
+public abstract class BaseEntity extends SoftDeletableEntity {
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
@@ -31,26 +19,11 @@ public abstract class BaseEntity {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    @Column(name = "deleted_at")
-    private Instant deletedAt;
-
-    public UUID getId() {
-        return id;
-    }
-
     public Instant getCreatedAt() {
         return createdAt;
     }
 
     public Instant getUpdatedAt() {
         return updatedAt;
-    }
-
-    public Instant getDeletedAt() {
-        return deletedAt;
-    }
-
-    public boolean isDeleted() {
-        return deletedAt != null;
     }
 }
