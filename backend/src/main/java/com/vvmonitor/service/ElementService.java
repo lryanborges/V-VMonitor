@@ -1,11 +1,13 @@
 package com.vvmonitor.service;
 
 import com.vvmonitor.api.dto.request.CreateElementRequest;
+import com.vvmonitor.api.dto.request.UpdateElementRequest;
 import com.vvmonitor.api.dto.response.ElementResponse;
 import com.vvmonitor.api.dto.response.NextCodeResponse;
 import com.vvmonitor.domain.entity.Element;
 import com.vvmonitor.domain.enums.ElementKind;
 import com.vvmonitor.domain.enums.MemberRole;
+import com.vvmonitor.domain.enums.Priority;
 import com.vvmonitor.domain.exception.ElementNotFoundException;
 import com.vvmonitor.domain.exception.InvalidFieldException;
 import com.vvmonitor.infra.repository.CodeSequenceRepository;
@@ -71,7 +73,7 @@ public class ElementService {
     @Transactional
     public ElementResponse create(UUID projectId, UUID userId, CreateElementRequest request) {
         accessService.requireRole(projectId, userId, MemberRole.EDITOR);
-        validatePriority(request);
+        validatePriority(request.kind(), request.priority());
 
         ElementKind kind = request.kind();
         int number = codeSequenceRepository.allocate(projectId, kind.sequenceKind());
@@ -88,12 +90,30 @@ public class ElementService {
         return new NextCodeResponse(kind, kind.code(codeSequenceRepository.peek(projectId, kind.sequenceKind())));
     }
 
+    /**
+     * RF14: edita descricao e prioridade; tipo e codigo nao mudam. O elemento volta a ser rascunho
+     * (alteracao pendente) e so aparece atualizado no grafo e na matriz apos nova submissao.
+     */
+    @Transactional
+    public ElementResponse update(UUID projectId, UUID elementId, UUID userId, UpdateElementRequest request) {
+        accessService.requireRole(projectId, userId, MemberRole.EDITOR);
+        Element element = elementRepository.findByIdAndProjectId(elementId, projectId)
+                .orElseThrow(() -> new ElementNotFoundException(elementId));
+        validatePriority(element.getKind(), request.priority());
+
+        element.update(request.description(), request.priority());
+        elementRepository.saveAndFlush(element);
+        projectRepository.touch(projectId);
+        ElementStats stats = statsRepository.findByProjectId(projectId).getOrDefault(elementId, ElementStats.NONE);
+        return ElementResponse.from(element, stats);
+    }
+
     /** Requisitos exigem prioridade (RF5); regras de negocio nao possuem (RF6). */
-    private static void validatePriority(CreateElementRequest request) {
-        if (request.kind().isRequirement() && request.priority() == null) {
+    private static void validatePriority(ElementKind kind, Priority priority) {
+        if (kind.isRequirement() && priority == null) {
             throw new InvalidFieldException("priority", "A prioridade é obrigatória para requisitos.");
         }
-        if (!request.kind().isRequirement() && request.priority() != null) {
+        if (!kind.isRequirement() && priority != null) {
             throw new InvalidFieldException("priority", "Regras de negócio não têm prioridade.");
         }
     }

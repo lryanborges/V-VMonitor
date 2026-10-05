@@ -1,17 +1,22 @@
 package com.vvmonitor.api.controller;
 
 import com.vvmonitor.api.dto.request.CreateElementRequest;
+import com.vvmonitor.api.dto.request.UpdateElementRequest;
+import com.vvmonitor.api.dto.response.DeleteImpactResponse;
 import com.vvmonitor.api.dto.response.ElementResponse;
 import com.vvmonitor.api.dto.response.NextCodeResponse;
 import com.vvmonitor.domain.enums.ElementKind;
 import com.vvmonitor.infra.security.AuthenticatedUser;
+import com.vvmonitor.service.ElementRemovalService;
 import com.vvmonitor.service.ElementService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -27,9 +32,11 @@ import java.util.UUID;
 public class ElementController {
 
     private final ElementService elementService;
+    private final ElementRemovalService removalService;
 
-    public ElementController(ElementService elementService) {
+    public ElementController(ElementService elementService, ElementRemovalService removalService) {
         this.elementService = elementService;
+        this.removalService = removalService;
     }
 
     /** Lista completa; abas por tipo e busca ficam no frontend. */
@@ -61,5 +68,31 @@ public class ElementController {
                                     @PathVariable UUID projectId,
                                     @PathVariable UUID elementId) {
         return elementService.findById(projectId, elementId, user.id());
+    }
+
+    /** RF14: edita descricao e prioridade (tipo e codigo sao fixos). */
+    @PutMapping("/{elementId}")
+    public ElementResponse update(@AuthenticationPrincipal AuthenticatedUser user,
+                                  @PathVariable UUID projectId,
+                                  @PathVariable UUID elementId,
+                                  @Valid @RequestBody UpdateElementRequest request) {
+        return elementService.update(projectId, elementId, user.id(), request);
+    }
+
+    /** RF16: o que muda no modelo se o elemento for excluido (nada e alterado). */
+    @GetMapping("/{elementId}/delete-impact")
+    public DeleteImpactResponse deleteImpact(@AuthenticationPrincipal AuthenticatedUser user,
+                                             @PathVariable UUID projectId,
+                                             @PathVariable UUID elementId) {
+        return removalService.impact(projectId, elementId, user.id());
+    }
+
+    /** RF15: exclui o elemento e suas associacoes. */
+    @DeleteMapping("/{elementId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void delete(@AuthenticationPrincipal AuthenticatedUser user,
+                       @PathVariable UUID projectId,
+                       @PathVariable UUID elementId) {
+        removalService.delete(projectId, elementId, user.id());
     }
 }

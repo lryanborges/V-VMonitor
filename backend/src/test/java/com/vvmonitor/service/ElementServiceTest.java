@@ -1,6 +1,7 @@
 package com.vvmonitor.service;
 
 import com.vvmonitor.api.dto.request.CreateElementRequest;
+import com.vvmonitor.api.dto.request.UpdateElementRequest;
 import com.vvmonitor.api.dto.response.ElementResponse;
 import com.vvmonitor.domain.entity.Element;
 import com.vvmonitor.domain.entity.ProjectMember;
@@ -177,5 +178,43 @@ class ElementServiceTest {
 
         assertThat(elementService.nextCode(projectId, userId, ElementKind.FUNCTIONAL).code()).isEqualTo("RF21");
         verify(codeSequenceRepository, never()).allocate(any(), any());
+    }
+
+    @Test
+    void edicaoAtualizaDescricaoEPrioridadeEVoltaParaRascunho() {
+        loggedAs(MemberRole.EDITOR);
+        Element rf2 = element(ElementKind.FUNCTIONAL, "RF2");
+        ReflectionTestUtils.setField(rf2, "submissionStatus", SubmissionStatus.SUBMITTED);
+        when(elementRepository.findByIdAndProjectId(rf2.getId(), projectId)).thenReturn(Optional.of(rf2));
+        when(statsRepository.findByProjectId(projectId)).thenReturn(Map.of());
+
+        ElementResponse response = elementService.update(projectId, rf2.getId(), userId,
+                new UpdateElementRequest("  Nova descrição ", Priority.OPTIONAL));
+
+        assertThat(response.code()).isEqualTo("RF2");
+        assertThat(response.description()).isEqualTo("Nova descrição");
+        assertThat(response.priority()).isEqualTo(Priority.OPTIONAL);
+        assertThat(response.submissionStatus()).isEqualTo(SubmissionStatus.DRAFT);
+        verify(projectRepository).touch(projectId);
+    }
+
+    @Test
+    void edicaoRespeitaRegraDePrioridadeDoTipo() {
+        loggedAs(MemberRole.EDITOR);
+        Element rn1 = element(ElementKind.BUSINESS_RULE, "RN1");
+        when(elementRepository.findByIdAndProjectId(rn1.getId(), projectId)).thenReturn(Optional.of(rn1));
+
+        assertThatThrownBy(() -> elementService.update(projectId, rn1.getId(), userId,
+                new UpdateElementRequest("x", Priority.MANDATORY)))
+                .isInstanceOf(InvalidFieldException.class);
+    }
+
+    @Test
+    void visualizadorNaoEdita() {
+        loggedAs(MemberRole.VIEWER);
+
+        assertThatThrownBy(() -> elementService.update(projectId, UUID.randomUUID(), userId,
+                new UpdateElementRequest("x", Priority.MANDATORY)))
+                .isInstanceOf(ProjectAccessDeniedException.class);
     }
 }

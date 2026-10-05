@@ -1,6 +1,6 @@
 package com.vvmonitor.api.exception;
 
-import com.vvmonitor.domain.exception.EmailAlreadyRegisteredException;
+import com.vvmonitor.domain.exception.ConflictException;
 import com.vvmonitor.domain.exception.InvalidCredentialsException;
 import com.vvmonitor.domain.exception.InvalidFieldException;
 import com.vvmonitor.domain.exception.ProjectAccessDeniedException;
@@ -84,9 +84,9 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.FORBIDDEN, "Acesso negado.", request, List.of());
     }
 
-    @ExceptionHandler(EmailAlreadyRegisteredException.class)
-    public ResponseEntity<ErrorResponse> handleEmailAlreadyRegistered(EmailAlreadyRegisteredException e,
-                                                                      HttpServletRequest request) {
+    /** Registro duplicado: e-mail ja cadastrado, relacionamento repetido, tipo com nome repetido. */
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException e, HttpServletRequest request) {
         return build(HttpStatus.CONFLICT, e.getMessage(), request, List.of());
     }
 
