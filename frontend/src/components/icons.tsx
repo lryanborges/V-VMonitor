@@ -127,6 +127,12 @@ export const TickIcon = (p: IconProps) => (
   </svg>
 )
 
+export const SwapIcon = (p: IconProps) => (
+  <svg {...base} {...p}>
+    <path d="M7 4 3 8l4 4M3 8h14M17 20l4-4-4-4M21 16H7" />
+  </svg>
+)
+
 export const EditIcon = (p: IconProps) => (
   <svg {...base} {...p}>
     <path d="M4 20h4L19 9l-4-4L4 16z" />

@@ -467,3 +467,56 @@ textarea.inp {
   border: 1px solid var(--bd);
   border-radius: 10px;
 }
+
+/* linhas por tipo de relacionamento (componente RelationLine) */
+.rl-line {
+  flex-shrink: 0;
+}
+
+.rl {
+  fill: none;
+  stroke: var(--mt);
+  stroke-width: 1.8;
+}
+
+.rl.ref { stroke-dasharray: 6 3; }
+.rl.sim { stroke-dasharray: 1.5 4; stroke-linecap: round; stroke-width: 2.2; }
+.rl.cf { stroke: var(--wr); stroke-dasharray: 8 3 2 3; }
+.rl.custom { stroke: var(--ac); }
+
+/* item de lista com chip + descricao (relacionamentos no painel) */
+.rel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: 7px;
+  border: 1px solid var(--bd);
+  background: var(--sf);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.rel:hover {
+  background: var(--sf2);
+}
+
+.rel .desc {
+  flex: 1;
+}
+
+/* botao de acao destrutiva (excluir) */
+.btn.d {
+  background: var(--wr);
+  border-color: var(--wr);
+  color: var(--wrfg);
+}
+
+.btn.d:hover {
+  filter: brightness(1.07);
+  background: var(--wr);
+}

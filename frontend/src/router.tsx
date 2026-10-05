@@ -33,6 +33,9 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <ModelPage /> },
           { path: 'elementos/novo', element: <ModelPage newElement /> },
+          { path: 'elementos/editar', element: <ModelPage editElement /> },
+          { path: 'elementos/excluir', element: <ModelPage deleteElement /> },
+          { path: 'relacionamentos/novo', element: <ModelPage addRelationship /> },
         ],
       },
     ],

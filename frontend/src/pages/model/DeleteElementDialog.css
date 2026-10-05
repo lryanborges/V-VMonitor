@@ -1,0 +1,101 @@
+/* nivel de impacto: barra de 3 segmentos (baixo, medio, alto) */
+.lv-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  border: 1px solid var(--bd);
+  border-radius: 9px;
+  background: var(--bg);
+}
+
+.lv-head {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.lv-box.high .lv-head strong,
+.lv-box.medium .lv-head strong {
+  color: var(--wr);
+}
+
+.lv-box.low .lv-head strong {
+  color: var(--ts);
+}
+
+.lv {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.lv span {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sf2);
+}
+
+.lv-box.high .lv span.on,
+.lv-box.medium .lv span.on {
+  background: var(--wr);
+}
+
+.lv-box.low .lv span.on {
+  background: var(--ts);
+}
+
+.lv-scale {
+  display: flex;
+  justify-content: space-between;
+}
+
+/* cada consequencia da exclusao */
+.imp {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding: 12px 0;
+  border-top: 1px solid var(--bd);
+}
+
+.imp:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.imp-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--sf2);
+  color: var(--mt);
+  flex-shrink: 0;
+}
+
+.imp-ic.w {
+  background: var(--wrs);
+  color: var(--wr);
+}
+
+.imp-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 0;
+}
+
+.imp-body b {
+  font-weight: 600;
+}
+
+.imp-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}

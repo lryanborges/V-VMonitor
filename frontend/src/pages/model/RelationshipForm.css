@@ -1,0 +1,148 @@
+/* partes compartilhadas pelos modais de relacionamento: seletor de tipo e frase de previa */
+
+/* titulo de etapa numerada */
+.st {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 10px;
+}
+
+.st b {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--fg);
+  color: var(--sf);
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+}
+
+/* tipos de relacionamento */
+.arm-types {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ty {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--bd2);
+  border-radius: 9px;
+  background: var(--sf);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ty:hover {
+  background: var(--sf2);
+}
+
+.ty[aria-pressed="true"] {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 1px var(--ac);
+  background: var(--acsoft);
+}
+
+.ty:disabled {
+  cursor: not-allowed;
+  background: var(--bg);
+  color: var(--mt);
+}
+
+.ty .h {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+}
+
+.tag {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 10px;
+  background: var(--sf2);
+  color: var(--mt);
+}
+
+.arm-newtype-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  height: 40px;
+  margin-top: 8px;
+  padding: 0 14px;
+  border: 1px dashed var(--bd2);
+  border-radius: 9px;
+  background: transparent;
+  color: var(--mt);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.arm-newtype-btn:hover {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
+.arm-newtype {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.arm-newtype .inp {
+  flex: 1;
+}
+
+/* previa da frase: RF7 —depende de→ RF5 */
+.arm-preview {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 14px;
+  border-radius: 9px;
+  background: var(--bg);
+}
+
+.arm-preview .chip {
+  height: 26px;
+  font-size: 13px;
+}
+
+.arm-verb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--mt);
+}
+
+.arm-verb.cf {
+  color: var(--wr);
+}
+
+.arm-verb.custom {
+  color: var(--ac);
+}
+
+.arm-swap {
+  margin-left: 4px;
+}
