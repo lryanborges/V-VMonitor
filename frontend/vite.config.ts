@@ -5,9 +5,10 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   server: {
-    // repassa as chamadas /api ao backend Spring; assim o navegador ve uma unica origem e nao ha CORS
+    // repassa as chamadas /api ao backend Spring; assim o navegador ve uma unica origem e nao ha CORS.
+    // API_TARGET permite apontar para outra instancia (ex.: API_TARGET=http://localhost:8081 npm run dev)
     proxy: {
-      '/api': 'http://localhost:8080',
+      '/api': process.env.API_TARGET ?? 'http://localhost:8080',
     },
   },
 })

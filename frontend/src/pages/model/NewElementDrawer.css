@@ -1,0 +1,238 @@
+.drawer-root {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.drawer-overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--ov);
+}
+
+.drawer {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(500px, 100%);
+  display: flex;
+  flex-direction: column;
+  background: var(--sf);
+  border-left: 1px solid var(--bd);
+  box-shadow: var(--shl);
+  animation: drawer-in .18s ease-out;
+}
+
+@keyframes drawer-in {
+  from { transform: translateX(24px); opacity: 0; }
+}
+
+.drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--bd);
+}
+
+.drawer-head h2 {
+  margin: 0;
+  font-size: 19px;
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+
+.drawer-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 24px;
+}
+
+.drawer-body .lbl {
+  margin-bottom: 8px;
+}
+
+.drawer-foot {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--bd);
+  background: var(--bg);
+}
+
+.drawer-foot .btn {
+  height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+
+/* seletor de tipo */
+.tp {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  border-radius: 9px;
+  background: var(--sf2);
+}
+
+.tp button {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mt);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tp button span {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+
+.tp button[aria-pressed="true"] {
+  background: var(--sf);
+  color: var(--fg);
+  box-shadow: var(--sh);
+}
+
+/* previa do identificador */
+.nr-id {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border: 1px dashed var(--bd2);
+  border-radius: 9px;
+  line-height: 1.35;
+}
+
+.nr-id-code.chip {
+  height: 32px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.nr-id-t {
+  font-weight: 600;
+  font-size: 13.5px;
+}
+
+/* opcoes de prioridade */
+.opts {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.opt {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid var(--bd2);
+  border-radius: 9px;
+  background: var(--sf);
+  color: var(--fg);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.opt:hover {
+  background: var(--sf2);
+}
+
+.opt[aria-pressed="true"] {
+  border-color: var(--ac);
+  box-shadow: 0 0 0 1px var(--ac);
+  background: var(--acsoft);
+}
+
+.opt .rd {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--bd2);
+  margin-top: 2px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.opt[aria-pressed="true"] .rd {
+  border-color: var(--ac);
+}
+
+.opt[aria-pressed="true"] .rd::after {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ac);
+}
+
+.opt-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.opt-text b {
+  font-weight: 600;
+}
+
+.opt-prio {
+  display: inline-flex;
+  gap: 2px;
+  align-items: flex-end;
+  margin-left: auto;
+  margin-top: 3px;
+}
+
+.opt-prio i {
+  width: 4px;
+  border-radius: 1px;
+  background: var(--bd2);
+}
+
+.opt-prio i:nth-child(1) { height: 6px; }
+.opt-prio i:nth-child(2) { height: 9px; }
+.opt-prio i:nth-child(3) { height: 12px; }
+.opt-prio.p3 i { background: var(--fg); }
+.opt-prio.p2 i:nth-child(-n+2) { background: var(--fg); }
+.opt-prio.p1 i:nth-child(1) { background: var(--fg); }
+
+.nr-note {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--mt);
+  font-size: 13px;
+}
+
+.nr-note .ico {
+  margin-top: 1px;
+}

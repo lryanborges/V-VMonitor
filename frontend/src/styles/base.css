@@ -250,3 +250,220 @@ body {
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
+
+/* campo pequeno com icone de busca a esquerda */
+.inp.sm {
+  height: 36px;
+  font-size: 13.5px;
+}
+
+.inp.with-icon {
+  padding-left: 34px;
+}
+
+textarea.inp {
+  height: auto;
+  padding: 10px 12px;
+  resize: none;
+  line-height: 1.5;
+}
+
+/* grupo de abas segmentadas (filtros) */
+.seg {
+  display: inline-flex;
+  padding: 3px;
+  gap: 2px;
+  background: var(--sf2);
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+}
+
+.seg button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--mt);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.seg button[aria-pressed="true"] {
+  background: var(--sf);
+  color: var(--fg);
+  font-weight: 600;
+  box-shadow: var(--sh);
+}
+
+.seg .n {
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--mt);
+}
+
+/* selos */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: 11px;
+  font-size: 11.5px;
+  font-weight: 600;
+  background: var(--sf2);
+  color: var(--mt);
+  white-space: nowrap;
+}
+
+.pill.a {
+  background: var(--acsoft);
+  color: var(--ac);
+}
+
+/* avatares com iniciais; .avs empilha com sobreposicao */
+.av {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 700;
+  background: var(--acsoft);
+  color: var(--ac);
+  border: 2px solid var(--sf);
+  flex-shrink: 0;
+}
+
+.avs {
+  display: flex;
+}
+
+.avs .av + .av {
+  margin-left: -8px;
+}
+
+/* barra de cobertura; .lo quando baixa */
+.bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--sf2);
+  overflow: hidden;
+  flex: 1;
+}
+
+.bar i {
+  display: block;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--ts);
+}
+
+.bar.lo i {
+  background: var(--wr);
+}
+
+/* numero com legenda (ex.: 30 Requisitos) */
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat b {
+  font-family: var(--font-mono);
+  font-size: 17px;
+  font-weight: 600;
+}
+
+.stat span {
+  font-size: 12px;
+  color: var(--mt);
+}
+
+/* botao pequeno */
+.btn.sm {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12.5px;
+}
+
+.btn:disabled:not(.busy) {
+  cursor: not-allowed;
+}
+
+/* codigo do elemento colorido por tipo (RF, RNF, RN, T) */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 7px;
+  border-radius: 5px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.chip.rf { color: var(--rf); background: var(--rfs); }
+.chip.rnf { color: var(--rnf); background: var(--rnfs); }
+.chip.rn { color: var(--rn); background: var(--rns); }
+.chip.t { color: var(--ts); background: var(--tss); }
+
+/* selos de aviso e de ok */
+.pill.w {
+  background: var(--wrs);
+  color: var(--wr);
+}
+
+.pill.ok {
+  background: var(--tss);
+  color: var(--ts);
+}
+
+.pill .ico {
+  width: 13px;
+  height: 13px;
+}
+
+/* prioridade com barrinhas: .p3 obrigatorio, .p2 desejavel, .p1 opcional */
+.prio {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.prio b {
+  display: inline-flex;
+  gap: 2px;
+  align-items: flex-end;
+}
+
+.prio b i {
+  width: 4px;
+  border-radius: 1px;
+  background: var(--bd2);
+}
+
+.prio b i:nth-child(1) { height: 6px; }
+.prio b i:nth-child(2) { height: 9px; }
+.prio b i:nth-child(3) { height: 12px; }
+.prio.p3 b i { background: var(--fg); }
+.prio.p2 b i:nth-child(-n+2) { background: var(--fg); }
+.prio.p1 b i:nth-child(1) { background: var(--fg); }
+
+/* superficie com borda */
+.card {
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+}

@@ -1,0 +1,152 @@
+.pl {
+  height: 100vh;
+  min-height: 600px;
+  display: flex;
+  overflow: hidden;
+}
+
+/* menu lateral */
+.pl-side {
+  width: 240px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 18px 12px 14px;
+  border-right: 1px solid var(--bd);
+  background: var(--sf);
+}
+
+.vv .pl-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 8px;
+  color: var(--fg);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: -0.01em;
+}
+
+.pl-project {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pl-project-card {
+  padding: 10px 12px;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.pl-project-card .eyebrow {
+  font-size: 11px;
+  margin-bottom: 4px;
+}
+
+.pl-project-name {
+  font-weight: 600;
+  font-size: 13.5px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.pl-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vv .nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 10px;
+  border-radius: 7px;
+  color: var(--mt);
+  font-weight: 500;
+}
+
+.vv .nav:hover {
+  background: var(--sf2);
+  color: var(--fg);
+}
+
+.vv .nav.on {
+  background: var(--sf2);
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.vv .nav.disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.vv .nav.disabled:hover {
+  background: transparent;
+  color: var(--mt);
+}
+
+.nav .n {
+  margin-left: auto;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  color: var(--mt);
+}
+
+.pl-account {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 4px 0 8px;
+  border-top: 1px solid var(--bd);
+}
+
+.pl-account .account {
+  flex: 1;
+}
+
+.pl-who {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.pl-who-name {
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pl-who .hint {
+  font-size: 12px;
+}
+
+/* conteudo */
+.pl-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pl-msg {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 32px;
+}
+
+@media (max-width: 900px) {
+  .pl-side {
+    display: none;
+  }
+}

@@ -1,0 +1,80 @@
+.account {
+  position: relative;
+  min-width: 0;
+}
+
+.account-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.account-trigger:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px var(--acsoft);
+}
+
+.account-menu {
+  position: absolute;
+  right: 0;
+  min-width: 240px;
+  padding: 6px;
+  background: var(--sf);
+  border: 1px solid var(--bd);
+  border-radius: 10px;
+  box-shadow: var(--shl);
+  z-index: 20;
+}
+
+.account-menu.down {
+  top: calc(100% + 8px);
+}
+
+.account-menu.up {
+  left: 0;
+  right: auto;
+  bottom: calc(100% + 8px);
+}
+
+.account-who {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 10px 10px;
+  border-bottom: 1px solid var(--bd);
+  margin-bottom: 6px;
+}
+
+.account-who span {
+  color: var(--mt);
+  font-size: 12.5px;
+}
+
+.account-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.account-item:hover {
+  background: var(--sf2);
+}

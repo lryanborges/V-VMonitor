@@ -1,7 +1,10 @@
 import { createBrowserRouter, Navigate } from 'react-router'
 import { RedirectIfAuthenticated, RequireAuth } from './auth/guards'
+import { AppLayout } from './layouts/AppLayout'
+import { ProjectLayout } from './layouts/ProjectLayout'
 import { LoginPage } from './pages/LoginPage'
-import { ProjectsPage } from './pages/ProjectsPage'
+import { ModelPage } from './pages/model/ModelPage'
+import { ProjectsPage } from './pages/projects/ProjectsPage'
 import { RegisterPage } from './pages/RegisterPage'
 
 export const router = createBrowserRouter([
@@ -14,7 +17,25 @@ export const router = createBrowserRouter([
   },
   {
     element: <RequireAuth />,
-    children: [{ path: '/projetos', element: <ProjectsPage /> }],
+    children: [
+      {
+        element: <AppLayout />,
+        children: [
+          { path: '/projetos', element: <ProjectsPage /> },
+          // o modal abre sobre a lista; ter rota propria permite voltar com o botao do navegador
+          { path: '/projetos/novo', element: <ProjectsPage newProject /> },
+        ],
+      },
+      {
+        // telas dentro de um projeto: menu lateral do projeto
+        path: '/projetos/:projectId',
+        element: <ProjectLayout />,
+        children: [
+          { index: true, element: <ModelPage /> },
+          { path: 'elementos/novo', element: <ModelPage newElement /> },
+        ],
+      },
+    ],
   },
   { path: '*', element: <Navigate to="/projetos" replace /> },
 ])
