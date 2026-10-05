@@ -2,7 +2,9 @@ package com.vvmonitor.api.exception;
 
 import com.vvmonitor.domain.exception.EmailAlreadyRegisteredException;
 import com.vvmonitor.domain.exception.InvalidCredentialsException;
-import com.vvmonitor.domain.exception.UserNotFoundException;
+import com.vvmonitor.domain.exception.InvalidFieldException;
+import com.vvmonitor.domain.exception.ProjectAccessDeniedException;
+import com.vvmonitor.domain.exception.ResourceNotFoundException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +36,12 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Dados inválidos.", request, fieldErrors);
     }
 
+    @ExceptionHandler(InvalidFieldException.class)
+    public ResponseEntity<ErrorResponse> handleInvalidField(InvalidFieldException e, HttpServletRequest request) {
+        return build(HttpStatus.BAD_REQUEST, "Dados inválidos.", request,
+                List.of(new ErrorResponse.FieldError(e.getField(), e.getMessage())));
+    }
+
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleUnreadable(HttpMessageNotReadableException e,
                                                           HttpServletRequest request) {
@@ -47,9 +55,15 @@ public class GlobalExceptionHandler {
                 request, List.of());
     }
 
-    @ExceptionHandler(UserNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNotFound(UserNotFoundException e, HttpServletRequest request) {
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException e, HttpServletRequest request) {
         return build(HttpStatus.NOT_FOUND, e.getMessage(), request, List.of());
+    }
+
+    @ExceptionHandler(ProjectAccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleProjectAccessDenied(ProjectAccessDeniedException e,
+                                                                   HttpServletRequest request) {
+        return build(HttpStatus.FORBIDDEN, e.getMessage(), request, List.of());
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
