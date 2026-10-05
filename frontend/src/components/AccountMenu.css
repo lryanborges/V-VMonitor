@@ -1,20 +1,13 @@
 .account {
   position: relative;
-  min-width: 0;
 }
 
 .account-trigger {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  max-width: 100%;
   padding: 0;
   border: 0;
   background: transparent;
-  color: inherit;
-  font: inherit;
-  text-align: left;
-  border-radius: 8px;
+  border-radius: 50%;
   cursor: pointer;
 }
 
@@ -26,6 +19,7 @@
 .account-menu {
   position: absolute;
   right: 0;
+  top: calc(100% + 8px);
   min-width: 240px;
   padding: 6px;
   background: var(--sf);
@@ -33,16 +27,6 @@
   border-radius: 10px;
   box-shadow: var(--shl);
   z-index: 20;
-}
-
-.account-menu.down {
-  top: calc(100% + 8px);
-}
-
-.account-menu.up {
-  left: 0;
-  right: auto;
-  bottom: calc(100% + 8px);
 }
 
 .account-who {
