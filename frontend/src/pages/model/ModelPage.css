@@ -259,3 +259,50 @@
     display: none;
   }
 }
+
+.md-rel-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.md-rel-group .eyebrow {
+  font-size: 11px;
+}
+
+/* relacao no painel: o item abre o outro elemento; as acoes aparecem ao passar o mouse ou focar */
+.rel-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.rel-row .rel {
+  padding-right: 10px;
+}
+
+.rel-actions {
+  position: absolute;
+  right: 4px;
+  display: flex;
+  gap: 2px;
+  padding-left: 16px;
+  background: linear-gradient(to right, transparent, var(--sf2) 14px);
+  border-radius: 0 7px 7px 0;
+  opacity: 0;
+  transition: opacity .12s;
+}
+
+.rel-actions .btn.ic.sm {
+  width: 28px;
+  height: 28px;
+}
+
+.rel-row:hover .rel-actions,
+.rel-row:focus-within .rel-actions {
+  opacity: 1;
+}
+
+.rel-row:hover .rel {
+  background: var(--sf2);
+}

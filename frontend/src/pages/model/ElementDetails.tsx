@@ -1,9 +1,36 @@
-import type { Element } from '../../api/types'
+import type { Element, Relationship } from '../../api/types'
 import { EditIcon, PlusIcon, TrashIcon } from '../../components/icons'
 import { KIND_TITLE, kindInfo, priorityInfo } from '../../utils/labels'
+import { groupRelationsOf } from '../../utils/relationships'
 
-/** Painel lateral com os detalhes do elemento selecionado. */
-export function ElementDetails({ element, canEdit }: { element: Element | null; canEdit: boolean }) {
+interface ElementDetailsProps {
+  element: Element | null
+  relationships: Relationship[]
+  canEdit: boolean
+  /** Seleciona outro elemento (ao clicar numa relacao). */
+  onSelect: (elementId: string) => void
+  /** RF14: editar o elemento. */
+  onEdit: () => void
+  /** RF15: excluir o elemento (com o alerta do RF16). */
+  onDelete: () => void
+  /** UC-06 passo 1: "Adicionar relacionamento" a partir deste elemento. */
+  onAddRelationship: () => void
+  onEditRelationship: (relationship: Relationship) => void
+  onRemoveRelationship: (relationship: Relationship) => void
+}
+
+/** Painel lateral com os detalhes do elemento selecionado, suas relacoes e testes. */
+export function ElementDetails({
+  element,
+  relationships,
+  canEdit,
+  onSelect,
+  onEdit,
+  onDelete,
+  onAddRelationship,
+  onEditRelationship,
+  onRemoveRelationship,
+}: ElementDetailsProps) {
   if (!element) {
     return (
       <aside className="md-details md-details-empty" aria-label="Detalhes do elemento">
@@ -14,6 +41,8 @@ export function ElementDetails({ element, canEdit }: { element: Element | null; 
 
   const kind = kindInfo(element.kind)
   const prio = element.priority ? priorityInfo(element.priority) : null
+  const groups = groupRelationsOf(element.id, relationships)
+  const total = groups.reduce((n, g) => n + g.items.length, 0)
 
   return (
     <aside className="md-details" aria-label={`Detalhes de ${element.code}`}>
@@ -24,10 +53,10 @@ export function ElementDetails({ element, canEdit }: { element: Element | null; 
           <div style={{ flex: 1 }} />
           {canEdit && (
             <>
-              <button className="btn ic g" type="button" disabled title="Em breve" aria-label={`Editar ${element.code}`}>
+              <button className="btn ic g" type="button" title="Editar" aria-label={`Editar ${element.code}`} onClick={onEdit}>
                 <EditIcon />
               </button>
-              <button className="btn ic g" type="button" disabled title="Em breve" aria-label={`Excluir ${element.code}`}>
+              <button className="btn ic g" type="button" title="Excluir" aria-label={`Excluir ${element.code}`} onClick={onDelete}>
                 <TrashIcon />
               </button>
             </>
@@ -56,14 +85,47 @@ export function ElementDetails({ element, canEdit }: { element: Element | null; 
 
       <div className="md-details-body">
         <div className="md-section-head">
-          <span>Relacionamentos <span className="mono hint">{element.links}</span></span>
+          <span>Relacionamentos <span className="mono hint">{total}</span></span>
           {canEdit && (
-            <button className="btn sm" type="button" disabled title="Em breve"><PlusIcon />Adicionar</button>
+            <button className="btn sm" type="button" onClick={onAddRelationship}><PlusIcon />Adicionar</button>
           )}
         </div>
-        <p className="hint">
-          {element.links === 0 ? 'Nenhum relacionamento ainda.' : 'A lista de relacionamentos chega na próxima etapa.'}
-        </p>
+        {total === 0 && <p className="hint">Nenhum relacionamento ainda.</p>}
+        {groups.map((group) => (
+          <div key={group.label} className="md-rel-group">
+            <span className="eyebrow">{group.label}</span>
+            {group.items.map(({ relationship, other }) => (
+              <div key={relationship.id} className="rel-row">
+                <button type="button" className="rel" title={`Ver ${other.code}`} onClick={() => onSelect(other.id)}>
+                  <span className={`chip ${kindInfo(other.kind).chip}`}>{other.code}</span>
+                  <span className="desc">{other.description}</span>
+                </button>
+                {canEdit && (
+                  <div className="rel-actions">
+                    <button
+                      className="btn ic g sm"
+                      type="button"
+                      title="Trocar tipo ou inverter"
+                      aria-label={`Editar relacionamento com ${other.code}`}
+                      onClick={() => onEditRelationship(relationship)}
+                    >
+                      <EditIcon />
+                    </button>
+                    <button
+                      className="btn ic g sm"
+                      type="button"
+                      title="Remover relacionamento"
+                      aria-label={`Remover relacionamento com ${other.code}`}
+                      onClick={() => onRemoveRelationship(relationship)}
+                    >
+                      <TrashIcon />
+                    </button>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ))}
 
         {element.kind !== 'BUSINESS_RULE' && (
           <>

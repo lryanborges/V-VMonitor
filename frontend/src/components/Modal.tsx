@@ -4,7 +4,13 @@ import './Modal.css'
 
 interface ModalProps {
   title: string
-  subtitle?: string
+  /** Texto ou conteudo livre abaixo do titulo (ex.: o elemento de origem). */
+  subtitle?: ReactNode
+  /** md: 540px (padrao); lg: 660px, para formularios com mais de uma etapa. */
+  size?: 'md' | 'lg'
+  /** Icone ao lado do titulo; com tone 'danger', em destaque de alerta (ex.: confirmar exclusao). */
+  icon?: ReactNode
+  tone?: 'default' | 'danger'
   onClose: () => void
   /** Rodape com os botoes de acao (Cancelar / Confirmar). */
   footer: ReactNode
@@ -12,7 +18,7 @@ interface ModalProps {
 }
 
 /** Dialogo no padrao do design: fundo escurecido, cabecalho, corpo e rodape com acoes. Esc fecha. */
-export function Modal({ title, subtitle, onClose, footer, children }: ModalProps) {
+export function Modal({ title, subtitle, size = 'md', icon, tone = 'default', onClose, footer, children }: ModalProps) {
   const titleId = useId()
 
   useEffect(() => {
@@ -30,11 +36,12 @@ export function Modal({ title, subtitle, onClose, footer, children }: ModalProps
   return (
     <div className="modal-root">
       <div className="modal-overlay" onClick={onClose} />
-      <div className="modal" role="dialog" aria-modal="true" aria-labelledby={titleId}>
+      <div className={`modal ${size}`} role={tone === 'danger' ? 'alertdialog' : 'dialog'} aria-modal="true" aria-labelledby={titleId}>
         <div className="modal-head">
+          {icon && <span className={`modal-icon ${tone}`}>{icon}</span>}
           <div className="modal-titles">
             <h2 id={titleId}>{title}</h2>
-            {subtitle && <p>{subtitle}</p>}
+            {subtitle && <div className="modal-subtitle">{subtitle}</div>}
           </div>
           <button className="btn ic g" type="button" aria-label="Fechar" onClick={onClose}>
             <CloseIcon />

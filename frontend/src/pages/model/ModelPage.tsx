@@ -2,7 +2,8 @@ import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState, type KeyboardEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import { elementKeys, elementsApi } from '../../api/elements'
-import type { Element, ElementKind } from '../../api/types'
+import { relationshipKeys, relationshipsApi } from '../../api/relationships'
+import type { Element, ElementKind, Relationship } from '../../api/types'
 import { FieldError } from '../../components/FieldError'
 import {
   AlertIcon,
@@ -17,8 +18,12 @@ import {
 } from '../../components/icons'
 import { useProject } from '../../layouts/useProject'
 import { KINDS, kindInfo, priorityInfo } from '../../utils/labels'
+import { AddRelationshipModal } from './AddRelationshipModal'
 import { ElementDetails } from './ElementDetails'
-import { NewElementDrawer } from './NewElementDrawer'
+import { DeleteElementDialog } from './DeleteElementDialog'
+import { EditRelationshipModal } from './EditRelationshipModal'
+import { ElementFormDrawer } from './ElementFormDrawer'
+import { RemoveRelationshipDialog } from './RemoveRelationshipDialog'
 import './ModelPage.css'
 
 type Filter = 'all' | ElementKind
@@ -30,17 +35,40 @@ function normalize(text: string) {
   return text.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase()
 }
 
-/** Tela "Modelo" em lista: requisitos e regras de negocio do projeto (RF5, RF6, RF13). */
-export function ModelPage({ newElement = false }: { newElement?: boolean }) {
+interface ModelPageProps {
+  /** Abre o painel de novo elemento (rota elementos/novo). */
+  newElement?: boolean
+  /** Abre o modal de novo relacionamento a partir do elemento selecionado (rota relacionamentos/novo). */
+  addRelationship?: boolean
+  /** Abre o painel de edicao do elemento selecionado (rota elementos/editar, RF14). */
+  editElement?: boolean
+  /** Abre a exclusao com alerta de impacto do elemento selecionado (rota elementos/excluir, RF15/RF16). */
+  deleteElement?: boolean
+}
+
+/** Tela "Modelo" em lista: requisitos, regras de negocio e seus relacionamentos (RF5, RF6, RF7, RF13). */
+export function ModelPage({
+  newElement = false,
+  addRelationship = false,
+  editElement = false,
+  deleteElement = false,
+}: ModelPageProps) {
   const project = useProject()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [filter, setFilter] = useState<Filter>('all')
   const [search, setSearch] = useState('')
   const [onlyUntested, setOnlyUntested] = useState(false)
+  // acoes sobre uma relacao do painel (RF14/RF15); ficam no estado da pagina, sem rota propria
+  const [relAction, setRelAction] = useState<{ mode: 'edit' | 'remove'; relationship: Relationship } | null>(null)
 
   const elements = useQuery({ queryKey: elementKeys.all(project.id), queryFn: () => elementsApi.list(project.id) })
   const all = useMemo(() => elements.data ?? [], [elements.data])
+  const relationships = useQuery({
+    queryKey: relationshipKeys.all(project.id),
+    queryFn: () => relationshipsApi.list(project.id),
+  })
+  const relations = useMemo(() => relationships.data ?? [], [relationships.data])
   const canEdit = project.role !== 'VIEWER'
   const selected = all.find((e) => e.id === params.get('el')) ?? null
 
@@ -48,7 +76,10 @@ export function ModelPage({ newElement = false }: { newElement?: boolean }) {
   const requirements = all.filter(isRequirement)
   const untested = requirements.filter((e) => e.tests === 0)
   const coverage = requirements.length === 0 ? 0 : Math.round((100 * (requirements.length - untested.length)) / requirements.length)
-  const drafts = all.filter((e) => e.submissionStatus === 'DRAFT').length
+  // alteracoes nao submetidas (RF10): elementos e relacionamentos em rascunho
+  const drafts =
+    all.filter((e) => e.submissionStatus === 'DRAFT').length +
+    relations.filter((r) => r.submissionStatus === 'DRAFT').length
 
   const rows = useMemo(() => {
     const term = normalize(search.trim())
@@ -61,10 +92,14 @@ export function ModelPage({ newElement = false }: { newElement?: boolean }) {
   }, [all, filter, search, onlyUntested])
 
   // quem so pode visualizar nao abre o formulario, nem pelo endereco direto
-  if (newElement && !canEdit) return <Navigate to={`/projetos/${project.id}`} replace />
+  // (mantem o elemento selecionado, se houver)
+  if ((newElement || addRelationship || editElement || deleteElement) && !canEdit) {
+    return <Navigate to={{ pathname: `/projetos/${project.id}`, search: params.toString() }} replace />
+  }
 
   const select = (id: string | null) => setParams(id ? { el: id } : {}, { replace: true })
   const base = `/projetos/${project.id}`
+  const backToSelected = () => navigate(selected ? `${base}?el=${selected.id}` : base)
 
   return (
     <>
@@ -77,7 +112,7 @@ export function ModelPage({ newElement = false }: { newElement?: boolean }) {
         </nav>
         <div style={{ flex: 1 }} />
         {drafts > 0 && (
-          <span className="pill w" title="Elementos em rascunho: aparecem no grafo e na matriz depois da submissão.">
+          <span className="pill w" title="Elementos e relacionamentos em rascunho: aparecem no grafo e na matriz depois da submissão.">
             <span className="dot" />
             {drafts === 1 ? '1 alteração não submetida' : `${drafts} alterações não submetidas`}
           </span>
@@ -181,15 +216,70 @@ export function ModelPage({ newElement = false }: { newElement?: boolean }) {
           </div>
         </section>
 
-        <ElementDetails element={selected} canEdit={canEdit} />
+        <ElementDetails
+          element={selected}
+          relationships={relations}
+          canEdit={canEdit}
+          onSelect={(id) => select(id)}
+          onEdit={() => selected && navigate(`${base}/elementos/editar?el=${selected.id}`)}
+          onDelete={() => selected && navigate(`${base}/elementos/excluir?el=${selected.id}`)}
+          onAddRelationship={() => selected && navigate(`${base}/relacionamentos/novo?el=${selected.id}`)}
+          onEditRelationship={(relationship) => setRelAction({ mode: 'edit', relationship })}
+          onRemoveRelationship={(relationship) => setRelAction({ mode: 'remove', relationship })}
+        />
       </div>
 
+      {addRelationship && selected && elements.isSuccess && (
+        <AddRelationshipModal
+          projectId={project.id}
+          origin={selected}
+          elements={all}
+          relationships={relations}
+          onClose={backToSelected}
+          // UC-06 passo 6: volta ao elemento de origem, ja com o novo vinculo no painel
+          onCreated={backToSelected}
+        />
+      )}
+
+      {editElement && selected && (
+        <ElementFormDrawer projectId={project.id} element={selected} onClose={backToSelected} onSaved={backToSelected} />
+      )}
+
+      {deleteElement && selected && (
+        <DeleteElementDialog
+          projectId={project.id}
+          element={selected}
+          onClose={backToSelected}
+          // o elemento deixa de existir: volta para a lista sem selecao
+          onDeleted={() => navigate(base)}
+        />
+      )}
+
+      {relAction?.mode === 'edit' && (
+        <EditRelationshipModal
+          projectId={project.id}
+          relationship={relAction.relationship}
+          relationships={relations}
+          onClose={() => setRelAction(null)}
+          onSaved={() => setRelAction(null)}
+        />
+      )}
+
+      {relAction?.mode === 'remove' && (
+        <RemoveRelationshipDialog
+          projectId={project.id}
+          relationship={relAction.relationship}
+          onClose={() => setRelAction(null)}
+          onRemoved={() => setRelAction(null)}
+        />
+      )}
+
       {newElement && (
-        <NewElementDrawer
+        <ElementFormDrawer
           projectId={project.id}
           onClose={() => navigate(base)}
           // UC-05 passo 7 e UC-07 passo 6: apresenta o elemento cadastrado
-          onCreated={(created) => navigate(`${base}?el=${created.id}`)}
+          onSaved={(created) => navigate(`${base}?el=${created.id}`)}
         />
       )}
     </>
