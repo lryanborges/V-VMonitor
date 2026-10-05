@@ -1,18 +1,11 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useAuth } from '../auth/AuthContext'
 import { initials } from '../utils/format'
 import { LogoutIcon } from './icons'
 import './AccountMenu.css'
 
-interface AccountMenuProps {
-  /** Conteudo ao lado do avatar (ex.: nome e papel no menu lateral). */
-  children?: ReactNode
-  /** Abre para cima quando o gatilho fica no rodape da tela. */
-  placement?: 'down' | 'up'
-}
-
 /** Avatar do usuario que abre um menu com nome, e-mail e "Sair". */
-export function AccountMenu({ children, placement = 'down' }: AccountMenuProps) {
+export function AccountMenu() {
   const { user, signOut } = useAuth()
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -40,10 +33,9 @@ export function AccountMenu({ children, placement = 'down' }: AccountMenuProps) 
         onClick={() => setOpen((o) => !o)}
       >
         <span className="av" style={{ width: 32, height: 32 }}>{initials(user?.name)}</span>
-        {children}
       </button>
       {open && (
-        <div className={`account-menu ${placement}`} role="menu">
+        <div className="account-menu" role="menu">
           <div className="account-who">
             <strong>{user?.name}</strong>
             <span>{user?.email}</span>
