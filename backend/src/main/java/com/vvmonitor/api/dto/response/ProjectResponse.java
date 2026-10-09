@@ -19,6 +19,9 @@ public record ProjectResponse(
         List<MemberSummary> members,
         Stats stats,
         Integer latestVersion,
+        /** RF10: ultima submissao do modelo; nulos ate a primeira. */
+        Instant lastSubmittedAt,
+        PersonSummary lastSubmittedBy,
         Instant createdAt,
         Instant updatedAt
 ) {

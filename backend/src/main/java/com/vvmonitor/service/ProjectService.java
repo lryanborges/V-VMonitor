@@ -84,11 +84,11 @@ public class ProjectService {
                 .map(MemberView::role)
                 .findFirst()
                 .orElseThrow(() -> new ProjectNotFoundException(project.getId()));
-        String ownerName = members.stream()
-                .filter(m -> m.userId().equals(project.getOwnerId()))
-                .map(MemberView::name)
-                .findFirst()
-                .orElse(null);
+        String ownerName = nameOf(project.getOwnerId(), members);
+        ProjectResponse.PersonSummary submittedBy = project.getLastSubmittedBy() == null
+                ? null
+                : new ProjectResponse.PersonSummary(project.getLastSubmittedBy(),
+                        nameOf(project.getLastSubmittedBy(), members));
 
         return new ProjectResponse(
                 project.getId(),
@@ -102,7 +102,14 @@ public class ProjectService {
                 ProjectResponse.Stats.of(stats.requirements(), stats.businessRules(), stats.tests(),
                         stats.requirementsWithTests()),
                 stats.latestVersion(),
+                project.getLastSubmittedAt(),
+                submittedBy,
                 project.getCreatedAt(),
                 project.getUpdatedAt());
+    }
+
+    /** Nome de um membro do projeto (ex.: dono, quem submeteu); null se a pessoa nao for mais membro. */
+    private static String nameOf(UUID userId, List<MemberView> members) {
+        return members.stream().filter(m -> m.userId().equals(userId)).map(MemberView::name).findFirst().orElse(null);
     }
 }

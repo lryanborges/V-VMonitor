@@ -6,6 +6,7 @@ import jakarta.persistence.Table;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Entity
@@ -24,6 +25,13 @@ public class Project extends BaseEntity {
     @Column(name = "owner_id", nullable = false, updatable = false)
     private UUID ownerId;
 
+    /** RF10: quando e por quem o modelo foi submetido pela ultima vez (nulos ate a primeira submissao). */
+    @Column(name = "last_submitted_at")
+    private Instant lastSubmittedAt;
+
+    @Column(name = "last_submitted_by")
+    private UUID lastSubmittedBy;
+
     protected Project() {
         // exigido pelo JPA
     }
@@ -32,6 +40,19 @@ public class Project extends BaseEntity {
         this.name = name.strip();
         this.description = description == null || description.isBlank() ? null : description.strip();
         this.ownerId = ownerId;
+    }
+
+    public void registerSubmission(UUID userId, Instant at) {
+        this.lastSubmittedBy = userId;
+        this.lastSubmittedAt = at;
+    }
+
+    public Instant getLastSubmittedAt() {
+        return lastSubmittedAt;
+    }
+
+    public UUID getLastSubmittedBy() {
+        return lastSubmittedBy;
     }
 
     public String getName() {

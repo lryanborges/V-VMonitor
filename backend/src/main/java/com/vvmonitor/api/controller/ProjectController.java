@@ -2,8 +2,10 @@ package com.vvmonitor.api.controller;
 
 import com.vvmonitor.api.dto.request.CreateProjectRequest;
 import com.vvmonitor.api.dto.response.ProjectResponse;
+import com.vvmonitor.api.dto.response.SubmissionResponse;
 import com.vvmonitor.infra.security.AuthenticatedUser;
 import com.vvmonitor.service.ProjectService;
+import com.vvmonitor.service.SubmissionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -23,9 +25,11 @@ import java.util.UUID;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final SubmissionService submissionService;
 
-    public ProjectController(ProjectService projectService) {
+    public ProjectController(ProjectService projectService, SubmissionService submissionService) {
         this.projectService = projectService;
+        this.submissionService = submissionService;
     }
 
     /** RF3, UC-04: projetos proprios e compartilhados; filtros e busca ficam no frontend. */
@@ -46,5 +50,11 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ProjectResponse findById(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID id) {
         return projectService.findById(id, user.id());
+    }
+
+    /** RF10: submete todos os elementos e relacoes em rascunho do projeto. */
+    @PostMapping("/{id}/submit")
+    public SubmissionResponse submit(@AuthenticationPrincipal AuthenticatedUser user, @PathVariable UUID id) {
+        return submissionService.submit(id, user.id());
     }
 }

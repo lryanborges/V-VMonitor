@@ -1,6 +1,6 @@
 # Schema do banco de dados, V&V Monitor
 
-Banco: PostgreSQL 16. Migrações versionadas com Flyway.
+Banco: PostgreSQL 16. Migrações versionadas com Flyway: `V1__schema_inicial` (tabelas) e `V2__ultima_submissao` (ultima submissao em `projects`).
 
 ## Convenções
 
@@ -48,6 +48,8 @@ Banco: PostgreSQL 16. Migrações versionadas com Flyway.
 | name | varchar(150) | NOT NULL |
 | description | text | NULL |
 | owner_id | uuid | NOT NULL, FK → users |
+| last_submitted_at | timestamptz | NULL; ultima submissao do modelo (RF10, migracao V2) |
+| last_submitted_by | uuid | NULL, FK → users; quem submeteu (os dois campos andam juntos: CHECK `ck_projects_last_submission`) |
 | created_at | timestamptz | NOT NULL |
 | updated_at | timestamptz | NOT NULL |
 | deleted_at | timestamptz | NULL |
