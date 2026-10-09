@@ -29,4 +29,12 @@ public interface RelationshipRepository extends JpaRepository<Relationship, UUID
              WHERE deleted_at IS NULL AND (source_id = :elementId OR target_id = :elementId)
             """, nativeQuery = true)
     int softDeleteAllOfElement(@Param("elementId") UUID elementId);
+
+    /** RF10: submete todas as relacoes em rascunho do projeto; devolve quantas foram submetidas. */
+    @Modifying
+    @Query(value = """
+            UPDATE relationships SET submission_status = 'SUBMITTED'
+             WHERE project_id = :projectId AND deleted_at IS NULL AND submission_status = 'DRAFT'
+            """, nativeQuery = true)
+    int submitDrafts(@Param("projectId") UUID projectId);
 }

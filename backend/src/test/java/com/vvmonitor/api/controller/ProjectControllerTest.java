@@ -1,12 +1,16 @@
 package com.vvmonitor.api.controller;
 
 import com.vvmonitor.api.dto.response.ProjectResponse;
+import com.vvmonitor.api.dto.response.SubmissionResponse;
 import com.vvmonitor.config.SecurityConfig;
 import com.vvmonitor.domain.enums.MemberRole;
+import com.vvmonitor.domain.exception.NothingToSubmitException;
+import com.vvmonitor.domain.exception.ProjectAccessDeniedException;
 import com.vvmonitor.domain.exception.ProjectNotFoundException;
 import com.vvmonitor.infra.repository.UserRepository;
 import com.vvmonitor.infra.security.JwtService;
 import com.vvmonitor.service.ProjectService;
+import com.vvmonitor.service.SubmissionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,6 +52,9 @@ class ProjectControllerTest {
     private ProjectService projectService;
 
     @MockitoBean
+    private SubmissionService submissionService;
+
+    @MockitoBean
     private UserRepository userRepository;
 
     @BeforeEach
@@ -64,7 +71,7 @@ class ProjectControllerTest {
         return new ProjectResponse(id, "Agenda clínica", null, MemberRole.OWNER,
                 new ProjectResponse.PersonSummary(LOGGED_ID, "Logado"),
                 List.of(new ProjectResponse.MemberSummary(LOGGED_ID, "Logado", MemberRole.OWNER)),
-                ProjectResponse.Stats.of(0, 0, 0, 0), null, Instant.now(), Instant.now());
+                ProjectResponse.Stats.of(0, 0, 0, 0), null, null, null, Instant.now(), Instant.now());
     }
 
     @Test
@@ -115,5 +122,32 @@ class ProjectControllerTest {
     void semTokenRetorna401() throws Exception {
         mockMvc.perform(get("/api/projects"))
                 .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void submeteModelo() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(submissionService.submit(id, LOGGED_ID)).thenReturn(new SubmissionResponse(7, 4, Instant.now(),
+                new ProjectResponse.PersonSummary(LOGGED_ID, "Logado")));
+
+        mockMvc.perform(authenticated(post("/api/projects/{id}/submit", id)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.elements").value(7))
+                .andExpect(jsonPath("$.relationships").value(4))
+                .andExpect(jsonPath("$.submittedBy.name").value("Logado"));
+    }
+
+    @Test
+    void submeterSemPendenciasRetorna409EVisualizador403() throws Exception {
+        UUID id = UUID.randomUUID();
+        when(submissionService.submit(id, LOGGED_ID)).thenThrow(new NothingToSubmitException());
+        mockMvc.perform(authenticated(post("/api/projects/{id}/submit", id)))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.message").value("Não há alterações para submeter."));
+
+        UUID other = UUID.randomUUID();
+        when(submissionService.submit(other, LOGGED_ID)).thenThrow(new ProjectAccessDeniedException(MemberRole.EDITOR));
+        mockMvc.perform(authenticated(post("/api/projects/{id}/submit", other)))
+                .andExpect(status().isForbidden());
     }
 }
