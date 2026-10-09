@@ -17,6 +17,7 @@ import {
   UploadIcon,
 } from '../../components/icons'
 import { useProject } from '../../layouts/useProject'
+import { timeAgo } from '../../utils/format'
 import { KINDS, kindInfo, priorityInfo } from '../../utils/labels'
 import { AddRelationshipModal } from './AddRelationshipModal'
 import { ElementDetails } from './ElementDetails'
@@ -24,6 +25,7 @@ import { DeleteElementDialog } from './DeleteElementDialog'
 import { EditRelationshipModal } from './EditRelationshipModal'
 import { ElementFormDrawer } from './ElementFormDrawer'
 import { RemoveRelationshipDialog } from './RemoveRelationshipDialog'
+import { SubmitModelDialog } from './SubmitModelDialog'
 import './ModelPage.css'
 
 type Filter = 'all' | ElementKind
@@ -60,6 +62,7 @@ export function ModelPage({
   const [search, setSearch] = useState('')
   const [onlyUntested, setOnlyUntested] = useState(false)
   // acoes sobre uma relacao do painel (RF14/RF15); ficam no estado da pagina, sem rota propria
+  const [submitting, setSubmitting] = useState(false)
   const [relAction, setRelAction] = useState<{ mode: 'edit' | 'remove'; relationship: Relationship } | null>(null)
 
   const elements = useQuery({ queryKey: elementKeys.all(project.id), queryFn: () => elementsApi.list(project.id) })
@@ -111,14 +114,35 @@ export function ModelPage({
           <button type="button" disabled title="Em breve"><MatrixIcon />Matriz</button>
         </nav>
         <div style={{ flex: 1 }} />
-        {drafts > 0 && (
+        {project.lastSubmittedAt && (
+          <span className="hint md-last-submit" title={new Date(project.lastSubmittedAt).toLocaleString('pt-BR')}>
+            Última submissão {timeAgo(project.lastSubmittedAt)}
+            {project.lastSubmittedBy?.name && ` por ${project.lastSubmittedBy.name}`}
+          </span>
+        )}
+        {drafts > 0 ? (
           <span className="pill w" title="Elementos e relacionamentos em rascunho: aparecem no grafo e na matriz depois da submissão.">
             <span className="dot" />
             {drafts === 1 ? '1 alteração não submetida' : `${drafts} alterações não submetidas`}
           </span>
+        ) : (
+          all.length > 0 && project.lastSubmittedAt && (
+            <span className="pill ok"><TickIcon />Modelo em dia</span>
+          )
         )}
         <button className="btn" type="button" disabled title="Em breve"><SaveVersionIcon />Salvar versão</button>
-        <button className="btn p" type="button" disabled title="Em breve"><UploadIcon />Submeter modelo</button>
+        {canEdit && (
+          <button
+            className="btn p"
+            type="button"
+            disabled={drafts === 0}
+            title={drafts === 0 ? 'Não há alterações para submeter' : undefined}
+            onClick={() => setSubmitting(true)}
+          >
+            <UploadIcon />
+            Submeter modelo
+          </button>
+        )}
       </header>
 
       <div className="md-body">
@@ -252,6 +276,16 @@ export function ModelPage({
           onClose={backToSelected}
           // o elemento deixa de existir: volta para a lista sem selecao
           onDeleted={() => navigate(base)}
+        />
+      )}
+
+      {submitting && (
+        <SubmitModelDialog
+          projectId={project.id}
+          elements={all}
+          relationships={relations}
+          onClose={() => setSubmitting(false)}
+          onSubmitted={() => setSubmitting(false)}
         />
       )}
 

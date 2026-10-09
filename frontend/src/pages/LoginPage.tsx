@@ -4,6 +4,7 @@ import { Link, useLocation, useNavigate } from 'react-router'
 import { authApi } from '../api/auth'
 import { ApiError } from '../api/client'
 import { FieldError } from '../components/FieldError'
+import { PasswordInput } from '../components/PasswordInput'
 import { CheckIcon } from '../components/icons'
 import { useAuth } from '../auth/AuthContext'
 import { AuthLayout, type HeroEdge, type HeroNode } from '../layouts/AuthLayout'
@@ -101,10 +102,9 @@ export function LoginPage() {
 
         <div>
           <label className="lbl" htmlFor="lg-senha">Senha</label>
-          <input
+          <PasswordInput
             id="lg-senha"
             className={`inp${fieldErrors.password || invalidCredentials ? ' err' : ''}`}
-            type="password"
             autoComplete="current-password"
             placeholder="Sua senha"
             value={password}

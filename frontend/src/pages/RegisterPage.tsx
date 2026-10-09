@@ -5,7 +5,7 @@ import { authApi } from '../api/auth'
 import { ApiError } from '../api/client'
 import type { RegisterUserRequest } from '../api/types'
 import { FieldError } from '../components/FieldError'
-import { LockIcon } from '../components/icons'
+import { PasswordInput } from '../components/PasswordInput'
 import { AuthLayout, type HeroEdge, type HeroNode } from '../layouts/AuthLayout'
 import type { LoginLocationState } from './LoginPage'
 
@@ -135,10 +135,9 @@ export function RegisterPage() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 12 }}>
           <div>
             <label className="lbl" htmlFor="cd-senha">Senha</label>
-            <input
+            <PasswordInput
               id="cd-senha"
               className={inputClass('password')}
-              type="password"
               autoComplete="new-password"
               placeholder="Mínimo de 8 caracteres"
               value={form.password}
@@ -149,10 +148,9 @@ export function RegisterPage() {
           </div>
           <div>
             <label className="lbl" htmlFor="cd-conf">Confirmar senha</label>
-            <input
+            <PasswordInput
               id="cd-conf"
               className={inputClass('passwordConfirmation')}
-              type="password"
               autoComplete="new-password"
               value={form.passwordConfirmation}
               onChange={(e) => update('passwordConfirmation', e.target.value)}
@@ -160,11 +158,6 @@ export function RegisterPage() {
             />
             {errors.passwordConfirmation && <FieldError>{errors.passwordConfirmation}</FieldError>}
           </div>
-        </div>
-
-        <div className="hint" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <LockIcon style={{ width: 14, height: 14 }} />
-          <span>Sua senha é armazenada de forma criptografada.</span>
         </div>
 
         {generalError && <FieldError>{generalError}</FieldError>}
