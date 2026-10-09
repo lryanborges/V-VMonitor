@@ -47,8 +47,19 @@ export interface Project {
   members: { id: string; name: string; role: MemberRole }[]
   stats: ProjectStats
   latestVersion: number | null
+  /** RF10: ultima submissao do modelo; nulos ate a primeira */
+  lastSubmittedAt: string | null
+  lastSubmittedBy: { id: string; name: string | null } | null
   createdAt: string
   updatedAt: string
+}
+
+/** SubmissionResponse.java: quantos rascunhos passaram a submetidos (RF10). */
+export interface SubmissionResult {
+  elements: number
+  relationships: number
+  submittedAt: string
+  submittedBy: { id: string; name: string | null }
 }
 
 export interface CreateProjectRequest {
