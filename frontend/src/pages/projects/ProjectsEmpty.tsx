@@ -4,7 +4,7 @@ import { PlusIcon } from '../../components/icons'
 /** UC-04, excecao do passo 2: sem projetos, o sistema informa e sugere a criacao. */
 export function ProjectsEmpty() {
   return (
-    <section className="empty dots">
+    <section className="pj-empty dots">
       <div className="empty-graph" aria-hidden="true">
         <svg width="300" height="120">
           <path d="M150 60 L50 30" />

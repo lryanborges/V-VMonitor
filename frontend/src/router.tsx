@@ -3,6 +3,8 @@ import { RedirectIfAuthenticated, RequireAuth } from './auth/guards'
 import { AppLayout } from './layouts/AppLayout'
 import { ProjectLayout } from './layouts/ProjectLayout'
 import { LoginPage } from './pages/LoginPage'
+import { GraphPage } from './pages/model/graph/GraphPage'
+import { MatrixPage } from './pages/model/MatrixPage'
 import { ModelPage } from './pages/model/ModelPage'
 import { ProjectsPage } from './pages/projects/ProjectsPage'
 import { RegisterPage } from './pages/RegisterPage'
@@ -33,9 +35,9 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <ModelPage /> },
           { path: 'elementos/novo', element: <ModelPage newElement /> },
-          { path: 'elementos/editar', element: <ModelPage editElement /> },
-          { path: 'elementos/excluir', element: <ModelPage deleteElement /> },
-          { path: 'relacionamentos/novo', element: <ModelPage addRelationship /> },
+          // RF11, RF12: grafo e matriz de rastreabilidade
+          { path: 'grafo', element: <GraphPage /> },
+          { path: 'matriz', element: <MatrixPage /> },
         ],
       },
     ],
