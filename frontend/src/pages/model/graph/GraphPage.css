@@ -1,0 +1,281 @@
+.gr-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.gr-canvas {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+/* o React Flow ocupa a area toda; o fundo pontilhado vem da classe .dots do container */
+.gr-canvas .react-flow {
+  background: transparent;
+}
+
+.gr-defs {
+  position: absolute;
+  width: 0;
+  height: 0;
+}
+
+.gr-msg {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: fit-content;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 32px;
+  text-align: center;
+}
+
+/* filtros no topo */
+.gr-filters {
+  position: absolute;
+  left: 20px;
+  top: 16px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.gr-filters > * {
+  pointer-events: auto;
+}
+
+.gr-tg {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 32px;
+  padding: 0 11px;
+  border-radius: 7px;
+  border: 1px solid var(--bd);
+  background: var(--sf);
+  color: var(--fg);
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  box-shadow: var(--sh);
+}
+
+.gr-tg[aria-pressed="false"] {
+  background: transparent;
+  color: var(--mt);
+  box-shadow: none;
+  border-style: dashed;
+}
+
+.gr-tg:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.gr-sw {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+}
+
+.gr-sw.rf { background: var(--rf); }
+.gr-sw.rnf { background: var(--rnf); }
+.gr-sw.rn { background: var(--rn); }
+.gr-sw.t { background: var(--ts); }
+
+/* bolinha de cobertura: cheia com teste, vazada sem teste */
+.gr-cov {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ts);
+  flex-shrink: 0;
+}
+
+.gr-cov.no {
+  background: transparent;
+  box-shadow: inset 0 0 0 1.6px var(--wr);
+}
+
+/* nos */
+.gr-node {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 11px;
+  border-radius: 15px;
+  background: var(--sf);
+  border: 1.5px solid var(--bd2);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  box-shadow: var(--sh);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.gr-node.rf { border-color: var(--rf); color: var(--rf); }
+.gr-node.rnf { border-color: var(--rnf); color: var(--rnf); }
+.gr-node.rn { border-color: var(--rn); color: var(--rn); }
+.gr-node.pending { border-style: dashed; }
+.gr-node.untested { box-shadow: var(--sh), 0 0 0 3px var(--wrs); }
+
+.gr-node.sel {
+  background: var(--ac);
+  border-color: var(--ac);
+  color: var(--acfg);
+  box-shadow: 0 0 0 5px var(--acsoft);
+}
+
+.gr-node.sel .gr-cov {
+  background: var(--acfg);
+  box-shadow: none;
+}
+
+.gr-handle {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* arestas: mesmos tracos do RelationLine */
+.gr-e {
+  fill: none;
+  stroke: var(--mt);
+  stroke-opacity: .55;
+  stroke-width: 1.5;
+}
+
+.gr-e.ref { stroke-dasharray: 7 4; }
+.gr-e.sim { stroke-dasharray: 1.5 4.5; stroke-linecap: round; stroke-width: 2; }
+.gr-e.cf { stroke: var(--wr); stroke-opacity: .95; stroke-dasharray: 9 3 2 3; stroke-width: 1.8; }
+.gr-e.custom { stroke: var(--ac); stroke-opacity: .7; }
+.gr-e.hl { stroke: var(--ac); stroke-opacity: 1; stroke-width: 2.2; }
+.gr-e.pending { stroke-opacity: .28; }
+.gr-e.hl.pending { stroke-opacity: .5; }
+
+.gr-hit {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 14;
+  cursor: pointer;
+}
+
+.gr-arrow { fill: var(--mt); fill-opacity: .7; }
+.gr-arrow.hl { fill: var(--ac); fill-opacity: 1; }
+
+/* legenda e zoom */
+.gr-legend {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 14px;
+}
+
+.gr-legend-row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.gr-lg {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--mt);
+  white-space: nowrap;
+}
+
+.gr-pending-sample {
+  width: 22px;
+  height: 14px;
+  border-radius: 7px;
+  border: 1.5px dashed var(--mt);
+}
+
+.gr-zoom {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gr-zoom .btn {
+  border-radius: 0;
+}
+
+.gr-zoom-n {
+  font-size: 11px;
+  text-align: center;
+  color: var(--mt);
+  padding: 2px 0;
+}
+
+.gr-zoom-fit {
+  border-top: 1px solid var(--bd);
+}
+
+/* nome da relacao sobre a aresta; o fundo cobre o traco para o texto ficar legivel */
+.gr-elabel {
+  position: absolute;
+  padding: 1px 6px;
+  border-radius: 9px;
+  background: var(--bg);
+  color: var(--mt);
+  font-size: 10.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.gr-elabel.cf { color: var(--wr); }
+.gr-elabel.custom { color: var(--ac); }
+.gr-elabel.hl { color: var(--ac); background: var(--acsoft); }
+.gr-elabel.pending { opacity: .55; }
+
+/* zoom editavel: clicar na porcentagem vira campo */
+.gr-zoom-n {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  cursor: text;
+}
+
+.gr-zoom-n:hover {
+  color: var(--fg);
+  background: var(--sf2);
+}
+
+.gr-zoom-input {
+  width: 44px;
+  height: 22px;
+  margin: 0 auto;
+  border: 1px solid var(--ac);
+  border-radius: 4px;
+  background: var(--sf);
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  text-align: center;
+  outline: none;
+}

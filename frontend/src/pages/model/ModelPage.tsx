@@ -1,34 +1,16 @@
-import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState, type KeyboardEvent } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
-import { elementKeys, elementsApi } from '../../api/elements'
-import { relationshipKeys, relationshipsApi } from '../../api/relationships'
-import type { Element, ElementKind, Relationship } from '../../api/types'
+import type { Element } from '../../api/types'
 import { FieldError } from '../../components/FieldError'
-import {
-  AlertIcon,
-  GraphIcon,
-  ListIcon,
-  MatrixIcon,
-  PlusIcon,
-  SaveVersionIcon,
-  SearchIcon,
-  TickIcon,
-  UploadIcon,
-} from '../../components/icons'
+import { AlertIcon, PlusIcon, SearchIcon, TickIcon } from '../../components/icons'
 import { useProject } from '../../layouts/useProject'
-import { timeAgo } from '../../utils/format'
-import { KINDS, kindInfo, priorityInfo } from '../../utils/labels'
-import { AddRelationshipModal } from './AddRelationshipModal'
-import { ElementDetails } from './ElementDetails'
-import { DeleteElementDialog } from './DeleteElementDialog'
-import { EditRelationshipModal } from './EditRelationshipModal'
+import { kindInfo, priorityInfo } from '../../utils/labels'
 import { ElementFormDrawer } from './ElementFormDrawer'
-import { RemoveRelationshipDialog } from './RemoveRelationshipDialog'
-import { SubmitModelDialog } from './SubmitModelDialog'
+import { ElementPanel } from './ElementPanel'
+import { KindTabs, type KindFilter } from './KindTabs'
+import { ModelHeader } from './ModelHeader'
+import { useModelData } from './useModelData'
 import './ModelPage.css'
-
-type Filter = 'all' | ElementKind
 
 const isRequirement = (e: Element) => e.kind !== 'BUSINESS_RULE'
 
@@ -40,38 +22,18 @@ function normalize(text: string) {
 interface ModelPageProps {
   /** Abre o painel de novo elemento (rota elementos/novo). */
   newElement?: boolean
-  /** Abre o modal de novo relacionamento a partir do elemento selecionado (rota relacionamentos/novo). */
-  addRelationship?: boolean
-  /** Abre o painel de edicao do elemento selecionado (rota elementos/editar, RF14). */
-  editElement?: boolean
-  /** Abre a exclusao com alerta de impacto do elemento selecionado (rota elementos/excluir, RF15/RF16). */
-  deleteElement?: boolean
 }
 
 /** Tela "Modelo" em lista: requisitos, regras de negocio e seus relacionamentos (RF5, RF6, RF7, RF13). */
-export function ModelPage({
-  newElement = false,
-  addRelationship = false,
-  editElement = false,
-  deleteElement = false,
-}: ModelPageProps) {
+export function ModelPage({ newElement = false }: ModelPageProps) {
   const project = useProject()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
-  const [filter, setFilter] = useState<Filter>('all')
+  const [filter, setFilter] = useState<KindFilter>('all')
   const [search, setSearch] = useState('')
   const [onlyUntested, setOnlyUntested] = useState(false)
-  // acoes sobre uma relacao do painel (RF14/RF15); ficam no estado da pagina, sem rota propria
-  const [submitting, setSubmitting] = useState(false)
-  const [relAction, setRelAction] = useState<{ mode: 'edit' | 'remove'; relationship: Relationship } | null>(null)
 
-  const elements = useQuery({ queryKey: elementKeys.all(project.id), queryFn: () => elementsApi.list(project.id) })
-  const all = useMemo(() => elements.data ?? [], [elements.data])
-  const relationships = useQuery({
-    queryKey: relationshipKeys.all(project.id),
-    queryFn: () => relationshipsApi.list(project.id),
-  })
-  const relations = useMemo(() => relationships.data ?? [], [relationships.data])
+  const { elementsQuery: elements, elements: all, relationships: relations, drafts } = useModelData(project.id)
   const canEdit = project.role !== 'VIEWER'
   const selected = all.find((e) => e.id === params.get('el')) ?? null
 
@@ -79,10 +41,6 @@ export function ModelPage({
   const requirements = all.filter(isRequirement)
   const untested = requirements.filter((e) => e.tests === 0)
   const coverage = requirements.length === 0 ? 0 : Math.round((100 * (requirements.length - untested.length)) / requirements.length)
-  // alteracoes nao submetidas (RF10): elementos e relacionamentos em rascunho
-  const drafts =
-    all.filter((e) => e.submissionStatus === 'DRAFT').length +
-    relations.filter((r) => r.submissionStatus === 'DRAFT').length
 
   const rows = useMemo(() => {
     const term = normalize(search.trim())
@@ -96,54 +54,16 @@ export function ModelPage({
 
   // quem so pode visualizar nao abre o formulario, nem pelo endereco direto
   // (mantem o elemento selecionado, se houver)
-  if ((newElement || addRelationship || editElement || deleteElement) && !canEdit) {
+  if (newElement && !canEdit) {
     return <Navigate to={{ pathname: `/projetos/${project.id}`, search: params.toString() }} replace />
   }
 
   const select = (id: string | null) => setParams(id ? { el: id } : {}, { replace: true })
   const base = `/projetos/${project.id}`
-  const backToSelected = () => navigate(selected ? `${base}?el=${selected.id}` : base)
 
   return (
     <>
-      <header className="md-header">
-        <h1>Modelo</h1>
-        <nav className="seg" aria-label="Modo de visualização">
-          <button type="button" aria-pressed="true"><ListIcon />Lista</button>
-          <button type="button" disabled title="Em breve"><GraphIcon />Grafo</button>
-          <button type="button" disabled title="Em breve"><MatrixIcon />Matriz</button>
-        </nav>
-        <div style={{ flex: 1 }} />
-        {project.lastSubmittedAt && (
-          <span className="hint md-last-submit" title={new Date(project.lastSubmittedAt).toLocaleString('pt-BR')}>
-            Última submissão {timeAgo(project.lastSubmittedAt)}
-            {project.lastSubmittedBy?.name && ` por ${project.lastSubmittedBy.name}`}
-          </span>
-        )}
-        {drafts > 0 ? (
-          <span className="pill w" title="Elementos e relacionamentos em rascunho: aparecem no grafo e na matriz depois da submissão.">
-            <span className="dot" />
-            {drafts === 1 ? '1 alteração não submetida' : `${drafts} alterações não submetidas`}
-          </span>
-        ) : (
-          all.length > 0 && project.lastSubmittedAt && (
-            <span className="pill ok"><TickIcon />Modelo em dia</span>
-          )
-        )}
-        <button className="btn" type="button" disabled title="Em breve"><SaveVersionIcon />Salvar versão</button>
-        {canEdit && (
-          <button
-            className="btn p"
-            type="button"
-            disabled={drafts === 0}
-            title={drafts === 0 ? 'Não há alterações para submeter' : undefined}
-            onClick={() => setSubmitting(true)}
-          >
-            <UploadIcon />
-            Submeter modelo
-          </button>
-        )}
-      </header>
+      <ModelHeader project={project} view="list" elements={all} relationships={relations} drafts={drafts} />
 
       <div className="md-body">
         <section className="md-content">
@@ -177,16 +97,7 @@ export function ModelPage({
           </div>
 
           <div className="md-toolbar">
-            <div className="seg" role="group" aria-label="Filtrar por tipo">
-              <button type="button" aria-pressed={filter === 'all'} onClick={() => setFilter('all')}>
-                Todos <span className="n">{all.length}</span>
-              </button>
-              {KINDS.map((k) => (
-                <button key={k.kind} type="button" aria-pressed={filter === k.kind} onClick={() => setFilter(k.kind)}>
-                  {k.plural} <span className="n">{all.filter((e) => e.kind === k.kind).length}</span>
-                </button>
-              ))}
-            </div>
+            <KindTabs value={filter} onChange={setFilter} elements={all} />
             <div className="md-search">
               <SearchIcon />
               <label htmlFor="rq-busca" className="sr-only">Buscar por ID ou descrição</label>
@@ -240,73 +151,16 @@ export function ModelPage({
           </div>
         </section>
 
-        <ElementDetails
+        <ElementPanel
+          projectId={project.id}
           element={selected}
+          elements={all}
           relationships={relations}
           canEdit={canEdit}
-          onSelect={(id) => select(id)}
-          onEdit={() => selected && navigate(`${base}/elementos/editar?el=${selected.id}`)}
-          onDelete={() => selected && navigate(`${base}/elementos/excluir?el=${selected.id}`)}
-          onAddRelationship={() => selected && navigate(`${base}/relacionamentos/novo?el=${selected.id}`)}
-          onEditRelationship={(relationship) => setRelAction({ mode: 'edit', relationship })}
-          onRemoveRelationship={(relationship) => setRelAction({ mode: 'remove', relationship })}
+          onSelect={select}
+          emptyHint="Selecione um elemento na lista para ver os detalhes, os relacionamentos e os testes."
         />
       </div>
-
-      {addRelationship && selected && elements.isSuccess && (
-        <AddRelationshipModal
-          projectId={project.id}
-          origin={selected}
-          elements={all}
-          relationships={relations}
-          onClose={backToSelected}
-          // UC-06 passo 6: volta ao elemento de origem, ja com o novo vinculo no painel
-          onCreated={backToSelected}
-        />
-      )}
-
-      {editElement && selected && (
-        <ElementFormDrawer projectId={project.id} element={selected} onClose={backToSelected} onSaved={backToSelected} />
-      )}
-
-      {deleteElement && selected && (
-        <DeleteElementDialog
-          projectId={project.id}
-          element={selected}
-          onClose={backToSelected}
-          // o elemento deixa de existir: volta para a lista sem selecao
-          onDeleted={() => navigate(base)}
-        />
-      )}
-
-      {submitting && (
-        <SubmitModelDialog
-          projectId={project.id}
-          elements={all}
-          relationships={relations}
-          onClose={() => setSubmitting(false)}
-          onSubmitted={() => setSubmitting(false)}
-        />
-      )}
-
-      {relAction?.mode === 'edit' && (
-        <EditRelationshipModal
-          projectId={project.id}
-          relationship={relAction.relationship}
-          relationships={relations}
-          onClose={() => setRelAction(null)}
-          onSaved={() => setRelAction(null)}
-        />
-      )}
-
-      {relAction?.mode === 'remove' && (
-        <RemoveRelationshipDialog
-          projectId={project.id}
-          relationship={relAction.relationship}
-          onClose={() => setRelAction(null)}
-          onRemoved={() => setRelAction(null)}
-        />
-      )}
 
       {newElement && (
         <ElementFormDrawer

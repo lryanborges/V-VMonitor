@@ -1,0 +1,151 @@
+/* painel lateral do elemento (ElementPanel), igual na lista, no grafo e na matriz */
+.ep {
+  width: 340px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--bd);
+  background: var(--sf);
+  overflow: hidden;
+}
+
+.ep-empty {
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  text-align: center;
+}
+
+.ep-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--bd);
+}
+
+.ep-head > .el-actions,
+.ep-head > .ep-stats,
+.ep-title {
+  align-self: stretch;
+}
+
+.ep-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ep-desc {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.5;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+.ep-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ep-stats > div {
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  border-radius: 8px;
+  background: var(--bg);
+}
+
+.ep-stats b {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.ep-stats b.ok {
+  color: var(--ts);
+}
+
+.ep-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.ep-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-weight: 700;
+}
+
+.ep-section-sep {
+  margin-top: 6px;
+  padding-top: 14px;
+  border-top: 1px solid var(--bd);
+}
+
+.ep-rel-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.ep-rel-group .eyebrow {
+  font-size: 11px;
+}
+
+/* vinculo: o item abre o outro elemento; as acoes aparecem ao passar o mouse ou focar */
+.ep-rel-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.ep-rel-row .rel {
+  padding-right: 10px;
+}
+
+.ep-rel-actions {
+  position: absolute;
+  right: 4px;
+  display: flex;
+  gap: 2px;
+  padding-left: 16px;
+  background: linear-gradient(to right, transparent, var(--sf2) 14px);
+  border-radius: 0 7px 7px 0;
+  opacity: 0;
+  transition: opacity .12s;
+}
+
+.ep-rel-actions .btn.ic.sm {
+  width: 28px;
+  height: 28px;
+}
+
+.ep-rel-row:hover .ep-rel-actions,
+.ep-rel-row:focus-within .ep-rel-actions {
+  opacity: 1;
+}
+
+.ep-rel-row:hover .rel {
+  background: var(--sf2);
+}
+
+@media (max-width: 1100px) {
+  .ep {
+    width: 280px;
+  }
+}
+
+@media (max-width: 900px) {
+  .ep {
+    display: none;
+  }
+}

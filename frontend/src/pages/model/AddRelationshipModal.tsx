@@ -19,6 +19,8 @@ interface AddRelationshipModalProps {
   origin: Element
   elements: Element[]
   relationships: Relationship[]
+  /** Destino ja escolhido (ex.: clique numa celula vazia da matriz). */
+  initialTargetId?: string
   onClose: () => void
   onCreated: () => void
 }
@@ -33,12 +35,13 @@ export function AddRelationshipModal({
   origin,
   elements,
   relationships,
+  initialTargetId,
   onClose,
   onCreated,
 }: AddRelationshipModalProps) {
   const queryClient = useQueryClient()
   const [search, setSearch] = useState('')
-  const [targetId, setTargetId] = useState<string | null>(null)
+  const [targetId, setTargetId] = useState<string | null>(initialTargetId ?? null)
   const [type, setType] = useState<RelationshipType | null>(null)
   // a origem e o sujeito da frase; inverter troca as pontas em tipos com direcao
   const [inverted, setInverted] = useState(false)

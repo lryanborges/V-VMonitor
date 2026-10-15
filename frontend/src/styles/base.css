@@ -520,3 +520,46 @@ textarea.inp {
   filter: brightness(1.07);
   background: var(--wr);
 }
+
+/* abas segmentadas tambem como links (ex.: Lista / Matriz) */
+.vv .seg a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--mt);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.vv .seg a:hover {
+  color: var(--fg);
+}
+
+.vv .seg a.on {
+  background: var(--sf);
+  color: var(--fg);
+  font-weight: 600;
+  box-shadow: var(--sh);
+}
+
+/* acoes do elemento nos paineis laterais (componente ElementActions) */
+.el-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.el-actions .btn {
+  flex: 1;
+}
+
+.vv .el-actions .el-delete {
+  color: var(--wr);
+}
+
+.vv .el-actions .el-delete:hover {
+  background: var(--wrs);
+  border-color: var(--wr);
+}

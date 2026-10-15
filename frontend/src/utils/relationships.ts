@@ -5,6 +5,8 @@ export type LineStyle = 'dep' | 'ref' | 'cf' | 'sim' | 'custom'
 interface TypeMeta {
   /** Verbo da frase "origem [verbo] destino", ex.: "depende de". */
   verb: string
+  /** Rotulo curto sobre a aresta do grafo, ex.: "depende de", "conflita com". */
+  short: string
   /** Rotulo do grupo no painel do elemento de origem (ex.: "Depende de"). */
   outgoing: string
   /** Rotulo do grupo no painel do elemento de destino (ex.: "Necessário para"). */
@@ -17,6 +19,7 @@ interface TypeMeta {
 const PREDEFINED: Record<string, TypeMeta> = {
   'Dependência': {
     verb: 'depende de',
+    short: 'depende de',
     outgoing: 'Depende de',
     incoming: 'Necessário para',
     hint: 'Um precisa do outro para ser atendido.',
@@ -24,6 +27,7 @@ const PREDEFINED: Record<string, TypeMeta> = {
   },
   Conflito: {
     verb: 'está em conflito com',
+    short: 'conflita com',
     outgoing: 'Em conflito com',
     incoming: 'Em conflito com',
     hint: 'Atender um dificulta atender o outro.',
@@ -31,6 +35,7 @@ const PREDEFINED: Record<string, TypeMeta> = {
   },
   Refinamento: {
     verb: 'refina',
+    short: 'refina',
     outgoing: 'Refina',
     incoming: 'Refinado por',
     hint: 'Um detalha ou especializa o outro.',
@@ -38,6 +43,7 @@ const PREDEFINED: Record<string, TypeMeta> = {
   },
   Similaridade: {
     verb: 'é similar a',
+    short: 'similar a',
     outgoing: 'Similar a',
     incoming: 'Similar a',
     hint: 'Tratam de necessidades parecidas.',
@@ -52,6 +58,7 @@ export function typeMeta(type: RelationshipType): TypeMeta {
   if (!type.custom && PREDEFINED[type.name]) return PREDEFINED[type.name]
   return {
     verb: `—${type.name}→`,
+    short: type.name,
     outgoing: `${type.name} →`,
     incoming: `← ${type.name}`,
     hint: 'Tipo criado neste projeto.',
@@ -98,4 +105,17 @@ export function groupRelationsOf(elementId: string, relationships: Relationship[
     groups.set(label, group)
   }
   return [...groups.values()]
+}
+
+/** Abreviacao do tipo na matriz: D, C, R, S para os pre-definidos; duas primeiras letras nos personalizados. */
+export function typeAbbr(type: RelationshipType): string {
+  const abbr: Record<string, string> = { 'Dependência': 'D', Conflito: 'C', Refinamento: 'R', Similaridade: 'S' }
+  if (!type.custom && abbr[type.name]) return abbr[type.name]
+  const letters = type.name.replace(/\s+/g, '')
+  return letters.charAt(0).toUpperCase() + letters.charAt(1).toLowerCase()
+}
+
+/** Frase da relacao na direcao gravada, ex.: "RF7 depende de RF5". */
+export function relationSentence(r: Relationship): string {
+  return `${r.source.code} ${typeMeta(r.type).verb.replace(/^—|→$/g, '')} ${r.target.code}`
 }
