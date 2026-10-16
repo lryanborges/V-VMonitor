@@ -3,6 +3,7 @@ package com.vvmonitor.infra.repository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.time.Instant;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -33,9 +34,14 @@ public class ProjectStatsRepository {
                       JOIN tests t ON t.id = tc.test_id AND t.deleted_at IS NULL
                      WHERE e.project_id = p.id AND e.deleted_at IS NULL
                        AND e.kind IN ('FUNCTIONAL', 'NON_FUNCTIONAL')) AS requirements_with_tests,
-                   (SELECT max(v.version_number) FROM project_versions v
-                     WHERE v.project_id = p.id) AS latest_version
+                   lv.version_number AS latest_version,
+                   lv.created_at AS latest_version_at,
+                   lv.created_by AS latest_version_by,
+                   lu.name AS latest_version_by_name
               FROM projects p
+              LEFT JOIN LATERAL (SELECT v.version_number, v.created_at, v.created_by FROM project_versions v
+                                  WHERE v.project_id = p.id ORDER BY v.version_number DESC LIMIT 1) lv ON true
+              LEFT JOIN users lu ON lu.id = lv.created_by
              WHERE p.id IN (:ids)
             """;
 
@@ -55,15 +61,19 @@ public class ProjectStatsRepository {
                 rs.getLong("business_rules"),
                 rs.getLong("tests"),
                 rs.getLong("requirements_with_tests"),
-                rs.getObject("latest_version", Integer.class)));
+                rs.getObject("latest_version", Integer.class),
+                rs.getTimestamp("latest_version_at") == null ? null : rs.getTimestamp("latest_version_at").toInstant(),
+                rs.getObject("latest_version_by", UUID.class),
+                rs.getString("latest_version_by_name")));
         return rows.stream().collect(Collectors.toMap(ProjectStatsView::projectId, Function.identity()));
     }
 
     public record ProjectStatsView(UUID projectId, long requirements, long businessRules, long tests,
-                                   long requirementsWithTests, Integer latestVersion) {
+                                   long requirementsWithTests, Integer latestVersion, Instant latestVersionAt,
+                                   UUID latestVersionBy, String latestVersionByName) {
 
         public static ProjectStatsView empty(UUID projectId) {
-            return new ProjectStatsView(projectId, 0, 0, 0, 0, null);
+            return new ProjectStatsView(projectId, 0, 0, 0, 0, null, null, null, null);
         }
     }
 }

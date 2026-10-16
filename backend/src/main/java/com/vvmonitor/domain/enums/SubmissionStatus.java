@@ -1,10 +1,15 @@
 package com.vvmonitor.domain.enums;
 
 /**
- * DRAFT: cadastrado no modelo atual, ainda fora da visualizacao.
- * SUBMITTED: submetido (RF10) e refletido no grafo e na matriz (UC-07).
+ * Situacao de um elemento ou relacao em relacao a ultima versao do modelo (RF10 + RF17), calculada pela
+ * comparacao com ela (nao e gravada). DRAFT: adicionado ou alterado desde a ultima versao (pendente).
+ * SUBMITTED: igual ao que esta na ultima versao.
  */
 public enum SubmissionStatus {
     DRAFT,
-    SUBMITTED
+    SUBMITTED;
+
+    public static SubmissionStatus of(boolean pending) {
+        return pending ? DRAFT : SUBMITTED;
+    }
 }

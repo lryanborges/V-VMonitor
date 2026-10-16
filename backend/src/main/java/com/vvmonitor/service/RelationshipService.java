@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -38,15 +39,17 @@ public class RelationshipService {
     private final ElementRepository elementRepository;
     private final ProjectRepository projectRepository;
     private final ProjectAccessService accessService;
+    private final VersionService versionService;
 
     public RelationshipService(RelationshipRepository relationshipRepository, RelationshipTypeRepository typeRepository,
                                ElementRepository elementRepository, ProjectRepository projectRepository,
-                               ProjectAccessService accessService) {
+                               ProjectAccessService accessService, VersionService versionService) {
         this.relationshipRepository = relationshipRepository;
         this.typeRepository = typeRepository;
         this.elementRepository = elementRepository;
         this.projectRepository = projectRepository;
         this.accessService = accessService;
+        this.versionService = versionService;
     }
 
     /** UC-06 passo 4: pre-definidos (Dependencia, Conflito, Refinamento, Similaridade) e os do projeto. */
@@ -80,13 +83,14 @@ public class RelationshipService {
                 .collect(Collectors.toMap(Element::getId, Function.identity()));
         Map<UUID, RelationshipType> types = typeRepository.findAvailableFor(projectId).stream()
                 .collect(Collectors.toMap(RelationshipType::getId, Function.identity()));
+        Set<UUID> pending = versionService.pendingIds(projectId);
 
         return relationshipRepository.findAllByProjectIdOrderByCreatedAt(projectId).stream()
                 // relacao cuja ponta foi removida nao e exibida (a remocao em cascata chega no RF15)
                 .filter(r -> elements.containsKey(r.getSourceId()) && elements.containsKey(r.getTargetId()))
                 .filter(r -> types.containsKey(r.getTypeId()))
                 .map(r -> RelationshipResponse.from(r, types.get(r.getTypeId()),
-                        elements.get(r.getSourceId()), elements.get(r.getTargetId())))
+                        elements.get(r.getSourceId()), elements.get(r.getTargetId()), pending.contains(r.getId())))
                 .toList();
     }
 
@@ -117,12 +121,12 @@ public class RelationshipService {
             throw new DuplicateRelationshipException(sentence);
         }
         projectRepository.touch(projectId);
-        return RelationshipResponse.from(relationship, type, first, second);
+        return RelationshipResponse.from(relationship, type, first, second, true);
     }
 
     /**
      * RF14: troca o tipo e, se pedido, inverte a direcao. As pontas continuam as mesmas; a relacao volta a
-     * ser rascunho, como o elemento editado.
+     * ficar pendente ate a proxima versao, como o elemento editado.
      */
     @Transactional
     public RelationshipResponse update(UUID projectId, UUID relationshipId, UUID userId,
@@ -152,7 +156,8 @@ public class RelationshipService {
             throw new DuplicateRelationshipException(sentence);
         }
         projectRepository.touch(projectId);
-        return RelationshipResponse.from(relationship, type, first, second);
+        return RelationshipResponse.from(relationship, type, first, second,
+                versionService.pendingIds(projectId).contains(relationship.getId()));
     }
 
     /** RF15: remove (soft delete) uma relacao; os dois elementos continuam no modelo. */

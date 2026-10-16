@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -35,25 +36,28 @@ public class ElementService {
     private final CodeSequenceRepository codeSequenceRepository;
     private final ProjectRepository projectRepository;
     private final ProjectAccessService accessService;
+    private final VersionService versionService;
 
     public ElementService(ElementRepository elementRepository, ElementStatsRepository statsRepository,
                           CodeSequenceRepository codeSequenceRepository, ProjectRepository projectRepository,
-                          ProjectAccessService accessService) {
+                          ProjectAccessService accessService, VersionService versionService) {
         this.elementRepository = elementRepository;
         this.statsRepository = statsRepository;
         this.codeSequenceRepository = codeSequenceRepository;
         this.projectRepository = projectRepository;
         this.accessService = accessService;
+        this.versionService = versionService;
     }
 
-    /** Requisitos e regras de negocio do projeto, rascunhos inclusive. */
+    /** Requisitos e regras de negocio do projeto, inclusive os pendentes (diferentes da ultima versao). */
     @Transactional(readOnly = true)
     public List<ElementResponse> list(UUID projectId, UUID userId) {
         accessService.requireMember(projectId, userId);
         Map<UUID, ElementStats> stats = statsRepository.findByProjectId(projectId);
+        Set<UUID> pending = versionService.pendingIds(projectId);
         return elementRepository.findAllByProjectId(projectId).stream()
                 .sorted(BY_KIND_AND_NUMBER)
-                .map(e -> ElementResponse.from(e, stats.getOrDefault(e.getId(), ElementStats.NONE)))
+                .map(e -> ElementResponse.from(e, stats.getOrDefault(e.getId(), ElementStats.NONE), pending.contains(e.getId())))
                 .toList();
     }
 
@@ -63,11 +67,11 @@ public class ElementService {
         Element element = elementRepository.findByIdAndProjectId(elementId, projectId)
                 .orElseThrow(() -> new ElementNotFoundException(elementId));
         ElementStats stats = statsRepository.findByProjectId(projectId).getOrDefault(elementId, ElementStats.NONE);
-        return ElementResponse.from(element, stats);
+        return ElementResponse.from(element, stats, versionService.pendingIds(projectId).contains(elementId));
     }
 
     /**
-     * RF5 e RF6, UC-05 e UC-07: valida, reserva o codigo e armazena o elemento como rascunho.
+     * RF5 e RF6, UC-05 e UC-07: valida, reserva o codigo e armazena o elemento (pendente ate a proxima versao).
      * Tudo na mesma transacao: se o armazenamento falhar, o numero reservado tambem e desfeito.
      */
     @Transactional
@@ -80,7 +84,7 @@ public class ElementService {
         Element element = elementRepository.saveAndFlush(new Element(
                 projectId, kind, kind.code(number), request.description(), request.priority(), userId));
         projectRepository.touch(projectId);
-        return ElementResponse.from(element, ElementStats.NONE);
+        return ElementResponse.from(element, ElementStats.NONE, true);
     }
 
     /** Previa do proximo codigo do tipo, exibida no formulario de novo elemento. */
@@ -91,8 +95,8 @@ public class ElementService {
     }
 
     /**
-     * RF14: edita descricao e prioridade; tipo e codigo nao mudam. O elemento volta a ser rascunho
-     * (alteracao pendente) e so aparece atualizado no grafo e na matriz apos nova submissao.
+     * RF14: edita descricao e prioridade; tipo e codigo nao mudam. A edicao vale na hora e fica pendente
+     * ate a proxima versao (deixa de ficar se voltar ao conteudo da ultima versao).
      */
     @Transactional
     public ElementResponse update(UUID projectId, UUID elementId, UUID userId, UpdateElementRequest request) {
@@ -105,7 +109,7 @@ public class ElementService {
         elementRepository.saveAndFlush(element);
         projectRepository.touch(projectId);
         ElementStats stats = statsRepository.findByProjectId(projectId).getOrDefault(elementId, ElementStats.NONE);
-        return ElementResponse.from(element, stats);
+        return ElementResponse.from(element, stats, versionService.pendingIds(projectId).contains(elementId));
     }
 
     /** Requisitos exigem prioridade (RF5); regras de negocio nao possuem (RF6). */

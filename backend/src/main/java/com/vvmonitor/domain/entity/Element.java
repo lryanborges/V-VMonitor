@@ -2,7 +2,6 @@ package com.vvmonitor.domain.entity;
 
 import com.vvmonitor.domain.enums.ElementKind;
 import com.vvmonitor.domain.enums.Priority;
-import com.vvmonitor.domain.enums.SubmissionStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -37,10 +36,6 @@ public class Element extends BaseEntity {
     @Column(length = 10)
     private Priority priority;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "submission_status", nullable = false, length = 10)
-    private SubmissionStatus submissionStatus;
-
     @Column(name = "created_by", nullable = false, updatable = false)
     private UUID createdBy;
 
@@ -48,7 +43,7 @@ public class Element extends BaseEntity {
         // exigido pelo JPA
     }
 
-    /** Novo elemento entra no modelo atual como rascunho (UC-07, passo 5). */
+    /** Novo elemento entra no modelo atual; fica pendente ate a proxima versao (UC-07, passo 5). */
     public Element(UUID projectId, ElementKind kind, String code, String description, Priority priority,
                    UUID createdBy) {
         this.projectId = projectId;
@@ -56,18 +51,16 @@ public class Element extends BaseEntity {
         this.code = code;
         this.description = description.strip();
         this.priority = priority;
-        this.submissionStatus = SubmissionStatus.DRAFT;
         this.createdBy = createdBy;
     }
 
     /**
      * RF14: edita descricao e prioridade. Tipo e codigo nao mudam (o codigo identifica o elemento).
-     * A edicao volta a ser uma alteracao pendente: o elemento so aparece atualizado apos nova submissao.
+     * A edicao vale na hora; ate a proxima versao, o elemento aparece como alteracao pendente.
      */
     public void update(String description, Priority priority) {
         this.description = description.strip();
         this.priority = priority;
-        this.submissionStatus = SubmissionStatus.DRAFT;
     }
 
     public UUID getProjectId() {
@@ -88,10 +81,6 @@ public class Element extends BaseEntity {
 
     public Priority getPriority() {
         return priority;
-    }
-
-    public SubmissionStatus getSubmissionStatus() {
-        return submissionStatus;
     }
 
     public UUID getCreatedBy() {

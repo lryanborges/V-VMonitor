@@ -16,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -91,7 +92,8 @@ class ProjectServiceTest {
                 new MemberView(shared.getId(), ana, "Ana Lima", MemberRole.OWNER),
                 new MemberView(shared.getId(), bruno, "Bruno", MemberRole.EDITOR)));
         when(statsRepository.findByProjectIds(any())).thenReturn(Map.of(
-                shared.getId(), new ProjectStatsView(shared.getId(), 48, 12, 31, 28, 3)));
+                shared.getId(), new ProjectStatsView(shared.getId(), 48, 12, 31, 28, 3,
+                        Instant.parse("2026-10-15T12:00:00Z"), ana, "Ana Lima")));
 
         ProjectResponse response = projectService.listAccessible(bruno).getFirst();
 
@@ -105,6 +107,9 @@ class ProjectServiceTest {
         assertThat(response.stats().tests()).isEqualTo(31);
         assertThat(response.stats().coverage()).isEqualTo(58); // 28 de 48
         assertThat(response.latestVersion()).isEqualTo(3);
+        // a ultima submissao e a ultima versao
+        assertThat(response.lastSubmittedAt()).isEqualTo(Instant.parse("2026-10-15T12:00:00Z"));
+        assertThat(response.lastSubmittedBy().name()).isEqualTo("Ana Lima");
     }
 
     @Test
