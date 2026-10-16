@@ -46,20 +46,13 @@ export interface Project {
   owner: { id: string; name: string | null }
   members: { id: string; name: string; role: MemberRole }[]
   stats: ProjectStats
+  /** RF10 + RF17: numero da ultima versao (v1, v2...); null antes da primeira */
   latestVersion: number | null
-  /** RF10: ultima submissao do modelo; nulos ate a primeira */
+  /** autor e data da ultima versao; nulos antes da primeira */
   lastSubmittedAt: string | null
   lastSubmittedBy: { id: string; name: string | null } | null
   createdAt: string
   updatedAt: string
-}
-
-/** SubmissionResponse.java: quantos rascunhos passaram a submetidos (RF10). */
-export interface SubmissionResult {
-  elements: number
-  relationships: number
-  submittedAt: string
-  submittedBy: { id: string; name: string | null }
 }
 
 export interface CreateProjectRequest {
@@ -69,6 +62,7 @@ export interface CreateProjectRequest {
 
 export type ElementKind = 'FUNCTIONAL' | 'NON_FUNCTIONAL' | 'BUSINESS_RULE'
 export type Priority = 'MANDATORY' | 'DESIRABLE' | 'OPTIONAL'
+/** DRAFT: adicionado ou alterado desde a ultima versao (calculado pelo backend). */
 export type SubmissionStatus = 'DRAFT' | 'SUBMITTED'
 
 /** ElementResponse.java: requisito funcional, nao funcional ou regra de negocio. */
@@ -157,4 +151,79 @@ export interface ErrorResponse {
   message: string
   path: string
   fieldErrors: { field: string; message: string }[]
+}
+
+/** ChangeSummary.java: itens (elementos e relacoes somados) adicionados, alterados e removidos. */
+export interface ChangeSummary {
+  added: number
+  modified: number
+  removed: number
+}
+
+/** ModelSnapshot.ElementSnapshot: elemento como esta (ou estava) numa versao. */
+export interface ElementSnapshot {
+  id: string
+  code: string
+  kind: ElementKind
+  description: string
+  priority: Priority | null
+}
+
+/** Relacao com pontas e tipo como estao (ou estavam) numa versao. */
+export interface VersionedRelationship {
+  id: string
+  type: RelationshipType
+  source: ElementSummary
+  target: ElementSummary
+}
+
+export interface ChangeGroup<T> {
+  added: T[]
+  modified: { before: T; after: T }[]
+  removed: T[]
+}
+
+/**
+ * ModelChangesResponse.java: mudancas de baseVersion (null = antes da primeira versao) para targetVersion
+ * (null = modelo atual). Sem comparacao explicita, e o que mudou desde a ultima versao.
+ */
+export interface ModelChanges {
+  baseVersion: number | null
+  targetVersion: number | null
+  summary: ChangeSummary
+  elements: ChangeGroup<ElementSnapshot>
+  relationships: ChangeGroup<VersionedRelationship>
+}
+
+/** VersionSummaryResponse.java: versao na lista (RF18). */
+export interface VersionSummary {
+  id: string
+  number: number
+  label: string | null
+  createdBy: { id: string; name: string | null }
+  createdAt: string
+  elements: number
+  relationships: number
+  /** mudancas em relacao a versao anterior */
+  changes: ChangeSummary | null
+}
+
+/** VersionResponse.java: versao com o modelo completo daquele momento (RF18). */
+export interface Version {
+  version: VersionSummary
+  elements: ElementSnapshot[]
+  relationships: VersionedRelationship[]
+}
+
+export interface CreateVersionRequest {
+  label: string | null
+}
+
+/** MemberResponse.java: pessoa com acesso ao projeto (RF20). */
+export interface Member {
+  userId: string
+  name: string
+  email: string
+  role: MemberRole
+  addedAt: string
 }

@@ -1,0 +1,95 @@
+/* lista de mudancas do modelo (ModelChangesView): adicionados, alterados e removidos */
+.chg {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.chg-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.chg-group .eyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+}
+
+.chg-group.added .eyebrow { color: var(--ts); }
+.chg-group.modified .eyebrow { color: var(--ac); }
+.chg-group.removed .eyebrow { color: var(--wr); }
+
+.chg-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.chg-el,
+.chg-rel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.chg-modified {
+  align-items: flex-start;
+}
+
+.chg-desc {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chg-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.chg-verb {
+  color: var(--mt);
+}
+
+.chg-old {
+  color: var(--mt);
+}
+
+.chg-rel.chg-old {
+  opacity: .6;
+  text-decoration: line-through;
+}
+
+.chg-arrow {
+  color: var(--mt);
+}
+
+.chg-rel-change {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+/* removidos: riscados e esmaecidos */
+.chg-group.removed .chg-el,
+.chg-group.removed .chg-rel {
+  opacity: .65;
+}
+
+.chg-group.removed .chg-desc,
+.chg-group.removed .chg-verb {
+  text-decoration: line-through;
+}

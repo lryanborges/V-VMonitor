@@ -1,12 +1,12 @@
-import { useMemo, useState, type KeyboardEvent } from 'react'
+import { useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
 import type { Element } from '../../api/types'
 import { FieldError } from '../../components/FieldError'
-import { AlertIcon, PlusIcon, SearchIcon, TickIcon } from '../../components/icons'
+import { AlertIcon, PlusIcon, SearchIcon } from '../../components/icons'
 import { useProject } from '../../layouts/useProject'
-import { kindInfo, priorityInfo } from '../../utils/labels'
 import { ElementFormDrawer } from './ElementFormDrawer'
 import { ElementPanel } from './ElementPanel'
+import { ElementTable } from './ElementTable'
 import { KindTabs, type KindFilter } from './KindTabs'
 import { ModelHeader } from './ModelHeader'
 import { useModelData } from './useModelData'
@@ -33,7 +33,7 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
   const [search, setSearch] = useState('')
   const [onlyUntested, setOnlyUntested] = useState(false)
 
-  const { elementsQuery: elements, elements: all, relationships: relations, drafts } = useModelData(project.id)
+  const { elementsQuery: elements, elements: all, relationships: relations, changes } = useModelData(project.id)
   const canEdit = project.role !== 'VIEWER'
   const selected = all.find((e) => e.id === params.get('el')) ?? null
 
@@ -63,7 +63,7 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
 
   return (
     <>
-      <ModelHeader project={project} view="list" elements={all} relationships={relations} drafts={drafts} />
+      <ModelHeader project={project} view="list" elements={all} changes={changes} />
 
       <div className="md-body">
         <section className="md-content">
@@ -118,37 +118,25 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
             )}
           </div>
 
-          <div className="card md-table" role="table" aria-label="Elementos do modelo">
-            <div className="row hd" role="row">
-              <span role="columnheader">ID</span>
-              <span role="columnheader">Descrição</span>
-              <span role="columnheader">Prioridade</span>
-              <span role="columnheader">Vínculos</span>
-              <span role="columnheader">Testes</span>
-            </div>
-            <div className="md-rows">
-              {elements.isPending && <p className="hint md-empty">Carregando elementos…</p>}
-              {elements.isError && <div className="md-empty"><FieldError>{elements.error.message}</FieldError></div>}
-              {elements.isSuccess && all.length === 0 && (
-                <div className="md-empty">
-                  <strong>Nenhum elemento cadastrado ainda.</strong>
-                  <span className="hint">Cadastre requisitos e regras de negócio para montar o modelo do projeto.</span>
-                  {canEdit && (
-                    <button className="btn p" type="button" onClick={() => navigate(`${base}/elementos/novo`)}>
-                      <PlusIcon />
-                      Cadastrar o primeiro elemento
-                    </button>
-                  )}
-                </div>
-              )}
-              {elements.isSuccess && all.length > 0 && rows.length === 0 && (
-                <p className="hint md-empty">Nenhum elemento encontrado com esses filtros.</p>
-              )}
-              {rows.map((e) => (
-                <ElementRow key={e.id} element={e} selected={e.id === selected?.id} onSelect={() => select(e.id)} />
-              ))}
-            </div>
-          </div>
+          <ElementTable elements={rows} selectedId={selected?.id ?? null} onSelect={(id) => select(id)}>
+            {elements.isPending && <p className="hint md-empty">Carregando elementos…</p>}
+            {elements.isError && <div className="md-empty"><FieldError>{elements.error.message}</FieldError></div>}
+            {elements.isSuccess && all.length === 0 && (
+              <div className="md-empty">
+                <strong>Nenhum elemento cadastrado ainda.</strong>
+                <span className="hint">Cadastre requisitos e regras de negócio para montar o modelo do projeto.</span>
+                {canEdit && (
+                  <button className="btn p" type="button" onClick={() => navigate(`${base}/elementos/novo`)}>
+                    <PlusIcon />
+                    Cadastrar o primeiro elemento
+                  </button>
+                )}
+              </div>
+            )}
+            {elements.isSuccess && all.length > 0 && rows.length === 0 && (
+              <p className="hint md-empty">Nenhum elemento encontrado com esses filtros.</p>
+            )}
+          </ElementTable>
         </section>
 
         <ElementPanel
@@ -174,39 +162,3 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
   )
 }
 
-function ElementRow({ element, selected, onSelect }: { element: Element; selected: boolean; onSelect: () => void }) {
-  const kind = kindInfo(element.kind)
-  const prio = element.priority ? priorityInfo(element.priority) : null
-  const onKey = (e: KeyboardEvent) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), onSelect())
-
-  return (
-    <div
-      className={selected ? 'row sel' : 'row'}
-      role="row"
-      tabIndex={0}
-      aria-selected={selected}
-      onClick={onSelect}
-      onKeyDown={onKey}
-    >
-      <span role="cell"><span className={`chip ${kind.chip}`}>{element.code}</span></span>
-      <span role="cell" className="desc" title={element.description}>{element.description}</span>
-      <span role="cell">
-        {prio ? (
-          <span className={`prio p${prio.level}`}><b><i /><i /><i /></b>{prio.label}</span>
-        ) : (
-          <span className="hint">—</span>
-        )}
-      </span>
-      <span role="cell" className="mono md-links">{element.links}</span>
-      <span role="cell">
-        {element.kind === 'BUSINESS_RULE' ? (
-          <span className="hint">—</span>
-        ) : element.tests > 0 ? (
-          <span className="pill ok"><TickIcon />{element.tests === 1 ? '1 teste' : `${element.tests} testes`}</span>
-        ) : (
-          <span className="pill w">Sem teste</span>
-        )}
-      </span>
-    </div>
-  )
-}

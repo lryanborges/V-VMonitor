@@ -1,23 +1,5 @@
 /* cabecalho das visoes do modelo (lista, matriz, grafo) */
 
-.md-header {
-  height: 60px;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 0 24px;
-  border-bottom: 1px solid var(--bd);
-  background: var(--sf);
-}
-
-.md-header h1 {
-  margin: 0 6px 0 0;
-  font-size: 17px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-}
-
 .seg button:disabled {
   opacity: .5;
   cursor: not-allowed;
@@ -31,6 +13,9 @@
 }
 
 .md-last-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
   white-space: nowrap;
 }
 

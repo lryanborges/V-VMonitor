@@ -1,4 +1,4 @@
-import type { ElementKind, Priority } from '../api/types'
+import type { ElementKind, MemberRole, Priority } from '../api/types'
 
 /** Rotulos e classes visuais dos tipos de elemento, na ordem exibida nas abas e no seletor. */
 export const KINDS: { kind: ElementKind; label: string; plural: string; prefix: string; chip: string }[] = [
@@ -24,3 +24,10 @@ export const PRIORITIES: { value: Priority; label: string; hint: string; level: 
 ]
 
 export const priorityInfo = (priority: Priority) => PRIORITIES.find((p) => p.value === priority)!
+
+/** Permissao de quem acessa o projeto (RF20, RNF4). */
+export const ROLE_LABEL: Record<MemberRole, string> = {
+  OWNER: 'Proprietário',
+  EDITOR: 'Pode editar',
+  VIEWER: 'Pode visualizar',
+}

@@ -8,6 +8,8 @@ import { MatrixPage } from './pages/model/MatrixPage'
 import { ModelPage } from './pages/model/ModelPage'
 import { ProjectsPage } from './pages/projects/ProjectsPage'
 import { RegisterPage } from './pages/RegisterPage'
+import { VersionPage } from './pages/versions/VersionPage'
+import { VersionsPage } from './pages/versions/VersionsPage'
 
 export const router = createBrowserRouter([
   {
@@ -38,6 +40,9 @@ export const router = createBrowserRouter([
           // RF11, RF12: grafo e matriz de rastreabilidade
           { path: 'grafo', element: <GraphPage /> },
           { path: 'matriz', element: <MatrixPage /> },
+          // RF18: versoes gravadas a cada submissao (RF10 + RF17)
+          { path: 'versoes', element: <VersionsPage /> },
+          { path: 'versoes/:number', element: <VersionPage /> },
         ],
       },
     ],

@@ -1,0 +1,90 @@
+/* janela de compartilhamento do projeto (RF20) */
+.sp-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  align-items: end;
+  gap: 10px;
+}
+
+.sp-role {
+  display: flex;
+  flex-direction: column;
+}
+
+.sp-role-fixed {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--bd);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--mt);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.sp-people {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sp-people .eyebrow {
+  font-size: 11px;
+}
+
+.sp-people ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  max-height: 300px;
+  overflow: auto;
+}
+
+.sp-person {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-top: 1px solid var(--bd);
+}
+
+.sp-person:first-child {
+  border-top: 0;
+}
+
+.sp-who {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.sp-name {
+  font-weight: 600;
+}
+
+.sp-email {
+  font-size: 12.5px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sp-person-role {
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.vv .sp-remove {
+  color: var(--wr);
+}
+
+.sp-confirm {
+  display: inline-flex;
+  gap: 6px;
+}
+

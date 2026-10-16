@@ -55,7 +55,7 @@ export function GraphPage() {
 
 function GraphView() {
   const project = useProject()
-  const { elementsQuery, relationshipsQuery, elements, relationships, drafts } = useModelData(project.id)
+  const { elementsQuery, relationshipsQuery, elements, relationships, changes } = useModelData(project.id)
   // o layout depende das relacoes: so monta o grafo com elementos e relacoes carregados
   const ready = elementsQuery.isSuccess && relationshipsQuery.isSuccess
   const [params, setParams] = useSearchParams()
@@ -155,7 +155,7 @@ function GraphView() {
 
   return (
     <>
-      <ModelHeader project={project} view="graph" elements={elements} relationships={relationships} drafts={drafts} />
+      <ModelHeader project={project} view="graph" elements={elements} changes={changes} />
 
       <div className="gr-body">
         <section className="gr-canvas dots" aria-label="Grafo de rastreabilidade">
@@ -171,7 +171,7 @@ function GraphView() {
             </div>
           )}
 
-          {ready && elements.length > 0 && nodes.length > 0 && (
+          {ready && elements.length > 0 && (
             <>
               <svg className="gr-defs" aria-hidden="true">
                 <defs>
@@ -184,22 +184,26 @@ function GraphView() {
                 </defs>
               </svg>
 
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes}
-                onNodesChange={handleNodesChange}
-                onNodeClick={onNodeClick}
-                onEdgeClick={onEdgeClick}
-                onPaneClick={() => select(null)}
-                nodesConnectable={false}
-                fitView
-                fitViewOptions={FIT_OPTIONS}
-                minZoom={MIN_ZOOM}
-                maxZoom={MAX_ZOOM}
-                attributionPosition="top-right"
-              />
+              {/* sem elementos visiveis, o canvas fica vazio; filtros e legenda continuam para reativar os tipos */}
+              {nodes.length > 0 && (
+                <ReactFlow
+                  nodes={nodes}
+                  edges={edges}
+                  nodeTypes={nodeTypes}
+                  edgeTypes={edgeTypes}
+                  onNodesChange={handleNodesChange}
+                  onNodeClick={onNodeClick}
+                  onEdgeClick={onEdgeClick}
+                  onPaneClick={() => select(null)}
+                  nodesConnectable={false}
+                  fitView
+                  fitViewOptions={FIT_OPTIONS}
+                  minZoom={MIN_ZOOM}
+                  maxZoom={MAX_ZOOM}
+                  // licenca MIT permite esconder; os avisos de licenca vao num arquivo de terceiros ao distribuir
+                  proOptions={{ hideAttribution: true }}
+                />
+              )}
 
               <div className="gr-filters">
                 {KINDS.map((k) => (
@@ -241,7 +245,7 @@ function GraphView() {
                 </div>
               </div>
 
-              <ZoomControls />
+              {nodes.length > 0 && <ZoomControls />}
             </>
           )}
         </section>
