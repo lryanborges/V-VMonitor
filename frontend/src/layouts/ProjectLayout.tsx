@@ -1,19 +1,15 @@
 import { useQuery } from '@tanstack/react-query'
-import type { ReactNode } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router'
 import { ApiError } from '../api/client'
 import { projectKeys, projectsApi } from '../api/projects'
-import type { MemberRole } from '../api/types'
 import { AppHeader } from '../components/AppHeader'
 import { FieldError } from '../components/FieldError'
 import { BackIcon, GraphIcon, HistoryIcon, MembersIcon, PlugIcon } from '../components/icons'
+import { ShareProjectDialog } from '../pages/members/ShareProjectDialog'
+import { ROLE_LABEL } from '../utils/labels'
+import { ShareContext } from './shareContext'
 import './ProjectLayout.css'
-
-const ROLE_LABEL: Record<MemberRole, string> = {
-  OWNER: 'Proprietário',
-  EDITOR: 'Pode editar',
-  VIEWER: 'Pode visualizar',
-}
 
 /** Moldura das telas de um projeto: cabecalho padrao, menu lateral do projeto e conteudo. */
 export function ProjectLayout() {
@@ -22,6 +18,8 @@ export function ProjectLayout() {
   const notFound = project.error instanceof ApiError && (project.error.status === 404 || project.error.status === 400)
 
   const data = project.data
+  // RF20: janela de compartilhamento, aberta pelo menu (Membros) ou pelo cabecalho das telas (Compartilhar)
+  const [sharing, setSharing] = useState(false)
   const elements = data ? data.stats.requirements + data.stats.businessRules : null
 
   return (
@@ -47,8 +45,16 @@ export function ProjectLayout() {
               Modelo
               {elements !== null && <span className="n">{elements}</span>}
             </NavLink>
-            <SoonNav icon={<HistoryIcon />} label="Versões" count={data?.latestVersion ? `v${data.latestVersion}` : undefined} />
-            <SoonNav icon={<MembersIcon />} label="Membros" count={data ? String(data.members.length) : undefined} />
+            <NavLink className={({ isActive }) => `nav${isActive ? ' on' : ''}`} to={`/projetos/${projectId}/versoes`}>
+              <HistoryIcon />
+              Versões
+              {data?.latestVersion && <span className="n">v{data.latestVersion}</span>}
+            </NavLink>
+            <button className="nav" type="button" disabled={!data} onClick={() => setSharing(true)}>
+              <MembersIcon />
+              Membros
+              {data && <span className="n">{data.members.length}</span>}
+            </button>
             <SoonNav icon={<PlugIcon />} label="Integrações" />
           </nav>
         </aside>
@@ -65,9 +71,15 @@ export function ProjectLayout() {
           {project.isError && !notFound && (
             <div className="pl-msg"><FieldError>{project.error.message}</FieldError></div>
           )}
-          {data && <Outlet context={data} />}
+          {data && (
+            <ShareContext.Provider value={() => setSharing(true)}>
+              <Outlet context={data} />
+            </ShareContext.Provider>
+          )}
         </div>
       </div>
+
+      {sharing && data && <ShareProjectDialog project={data} onClose={() => setSharing(false)} />}
     </div>
   )
 }

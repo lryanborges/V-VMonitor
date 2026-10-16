@@ -43,7 +43,7 @@ type CellAction =
  */
 export function MatrixPage() {
   const project = useProject()
-  const { elementsQuery, elements, relationships, drafts } = useModelData(project.id)
+  const { elementsQuery, elements, relationships, changes } = useModelData(project.id)
   const [rowFilter, setRowFilter] = useState<KindFilter>('FUNCTIONAL')
   const [linkFilter, setLinkFilter] = useState<LinkFilter>('all')
   const [hoverCol, setHoverCol] = useState<string | null>(null)
@@ -128,7 +128,7 @@ export function MatrixPage() {
 
   return (
     <>
-      <ModelHeader project={project} view="matrix" elements={elements} relationships={relationships} drafts={drafts} />
+      <ModelHeader project={project} view="matrix" elements={elements} changes={changes} />
 
       <div className="mx-body">
       <section className="mx-content">

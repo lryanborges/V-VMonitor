@@ -15,7 +15,7 @@ export function ProjectCard({ project }: { project: Project }) {
       <div className="pc-top">
         <div className="pc-title">
           <span>{project.name}</span>
-          <span className="pill mono">{project.latestVersion ? `v${project.latestVersion}` : 'rascunho'}</span>
+          <span className={project.latestVersion ? 'pill mono' : 'pill'}>{project.latestVersion ? `v${project.latestVersion}` : 'Sem versão'}</span>
         </div>
         <p className="pc-desc">{project.description ?? 'Sem descrição.'}</p>
       </div>

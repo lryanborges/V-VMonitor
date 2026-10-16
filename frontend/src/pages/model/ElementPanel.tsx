@@ -22,6 +22,11 @@ interface ElementPanelProps {
   onSelect: (elementId: string | null) => void
   /** Texto do estado vazio, conforme a visualizacao. */
   emptyHint: string
+  /**
+   * Elemento de uma versao (RF18): so leitura, sem a situacao (rascunho/submetido) e sem testes, que nao fazem
+   * parte da copia guardada.
+   */
+  fromVersion?: boolean
 }
 
 type PanelAction =
@@ -36,7 +41,16 @@ type PanelAction =
  * dependencia e testes, vinculos e as acoes de editar e excluir (RF14, RF15/RF16) e de relacionar (RF7, RF8).
  * As janelas dessas acoes abrem dentro do proprio painel.
  */
-export function ElementPanel({ projectId, element, elements, relationships, canEdit, onSelect, emptyHint }: ElementPanelProps) {
+export function ElementPanel({
+  projectId,
+  element,
+  elements,
+  relationships,
+  canEdit,
+  onSelect,
+  emptyHint,
+  fromVersion = false,
+}: ElementPanelProps) {
   const [action, setAction] = useState<PanelAction | null>(null)
   const close = () => setAction(null)
 
@@ -64,11 +78,12 @@ export function ElementPanel({ projectId, element, elements, relationships, canE
           <span className={`chip ${kindInfo(element.kind).chip}`} style={{ height: 26, fontSize: 13 }}>{element.code}</span>
           <span className="hint">{KIND_TITLE[element.kind]}</span>
           <div style={{ flex: 1 }} />
-          {element.submissionStatus === 'DRAFT' ? (
-            <span className="pill w" title="Alteração ainda não submetida.">Rascunho</span>
-          ) : (
-            <span className="pill ok">Submetido</span>
-          )}
+          {!fromVersion &&
+            (element.submissionStatus === 'DRAFT' ? (
+              <span className="pill w" title="Alteração ainda não submetida.">Rascunho</span>
+            ) : (
+              <span className="pill ok">Submetido</span>
+            ))}
         </div>
         <p className="ep-desc">{element.description}</p>
         {prio && (
@@ -80,13 +95,15 @@ export function ElementPanel({ projectId, element, elements, relationships, canE
             onDelete={() => setAction({ mode: 'deleteElement' })}
           />
         )}
-        <div className="ep-stats">
+        <div className={`ep-stats${fromVersion ? ' two' : ''}`}>
           <div><b className="mono">{dependsOn}</b><span className="hint">Depende de</span></div>
           <div><b className="mono">{dependents}</b><span className="hint">Dependentes</span></div>
-          <div>
-            <b className={`mono${element.tests > 0 ? ' ok' : ''}`}>{isRule ? '—' : element.tests}</b>
-            <span className="hint">{element.tests === 1 ? 'Teste' : 'Testes'}</span>
-          </div>
+          {!fromVersion && (
+            <div>
+              <b className={`mono${element.tests > 0 ? ' ok' : ''}`}>{isRule ? '—' : element.tests}</b>
+              <span className="hint">{element.tests === 1 ? 'Teste' : 'Testes'}</span>
+            </div>
+          )}
         </div>
       </div>
 
@@ -136,7 +153,7 @@ export function ElementPanel({ projectId, element, elements, relationships, canE
           </div>
         ))}
 
-        {!isRule && (
+        {!isRule && !fromVersion && (
           <>
             <div className="ep-section-head ep-section-sep">
               <span>Testes <span className="mono hint">{element.tests}</span></span>

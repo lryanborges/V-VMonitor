@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import type { Element, Project, Relationship } from '../../api/types'
-import { GraphIcon, ListIcon, MatrixIcon, SaveVersionIcon, TickIcon, UploadIcon } from '../../components/icons'
+import type { ChangeSummary, Element, ModelChanges, Project } from '../../api/types'
+import { PageHeader } from '../../components/PageHeader'
+import { GraphIcon, ListIcon, MatrixIcon, MembersIcon, TickIcon, UploadIcon } from '../../components/icons'
+import { useOpenShare } from '../../layouts/shareContext'
 import { timeAgo } from '../../utils/format'
-import { SubmitModelDialog } from './SubmitModelDialog'
+import { SubmitVersionDialog } from './SubmitVersionDialog'
 import './ModelHeader.css'
 
 export type ModelView = 'list' | 'graph' | 'matrix'
@@ -12,27 +14,38 @@ interface ModelHeaderProps {
   project: Project
   view: ModelView
   elements: Element[]
-  relationships: Relationship[]
-  drafts: number
+  /** Mudancas desde a ultima versao; undefined enquanto carrega. */
+  changes: ModelChanges | undefined
+}
+
+const total = (s: ChangeSummary) => s.added + s.modified + s.removed
+
+/** Ex.: "2 adicionados, 1 removido" (itens: elementos e relacionamentos). */
+function describe(s: ChangeSummary) {
+  const part = (n: number, one: string, many: string) => (n === 0 ? null : `${n} ${n === 1 ? one : many}`)
+  return [part(s.added, 'adicionado', 'adicionados'), part(s.modified, 'alterado', 'alterados'), part(s.removed, 'removido', 'removidos')]
+    .filter(Boolean)
+    .join(', ')
 }
 
 /**
- * Cabecalho das visoes do modelo: alternancia Lista / Grafo / Matriz (RF12), ultima submissao,
- * alteracoes pendentes e o botao de submeter (RF10).
+ * Cabecalho das visoes do modelo: alternancia Lista / Grafo / Matriz (RF12), ultima versao, mudancas
+ * desde ela (inclusive remocoes) e o botao de submeter, que grava a proxima versao (RF10 + RF17).
  */
-export function ModelHeader({ project, view, elements, relationships, drafts }: ModelHeaderProps) {
+export function ModelHeader({ project, view, elements, changes }: ModelHeaderProps) {
   const [submitting, setSubmitting] = useState(false)
+  const openShare = useOpenShare()
   const canEdit = project.role !== 'VIEWER'
   const base = `/projetos/${project.id}`
   // o elemento selecionado (?el=) acompanha a troca de visualizacao
   const [params] = useSearchParams()
   const selectedId = params.get('el')
   const keep = selectedId ? `?el=${selectedId}` : ''
+  const pending = changes ? total(changes.summary) : 0
 
   return (
     <>
-      <header className="md-header">
-        <h1>Modelo</h1>
+      <PageHeader title="Modelo">
         <nav className="seg" aria-label="Modo de visualização">
           <Link to={`${base}${keep}`} aria-current={view === 'list' ? 'page' : undefined} className={view === 'list' ? 'on' : ''}>
             <ListIcon />Lista
@@ -53,42 +66,52 @@ export function ModelHeader({ project, view, elements, relationships, drafts }: 
           </Link>
         </nav>
         <div style={{ flex: 1 }} />
-        {project.lastSubmittedAt && (
-          <span className="hint md-last-submit" title={new Date(project.lastSubmittedAt).toLocaleString('pt-BR')}>
-            Última submissão {timeAgo(project.lastSubmittedAt)}
-            {project.lastSubmittedBy?.name && ` por ${project.lastSubmittedBy.name}`}
-          </span>
-        )}
-        {drafts > 0 ? (
-          <span className="pill w" title="Elementos e relacionamentos em rascunho, ainda não submetidos.">
-            <span className="dot" />
-            {drafts === 1 ? '1 alteração não submetida' : `${drafts} alterações não submetidas`}
+        {project.latestVersion ? (
+          <span className="md-last-submit" title={project.lastSubmittedAt ? new Date(project.lastSubmittedAt).toLocaleString('pt-BR') : undefined}>
+            <span className="pill mono">v{project.latestVersion}</span>
+            {project.lastSubmittedAt && (
+              <span className="hint">
+                {timeAgo(project.lastSubmittedAt)}
+                {project.lastSubmittedBy?.name && ` por ${project.lastSubmittedBy.name}`}
+              </span>
+            )}
           </span>
         ) : (
-          elements.length > 0 && project.lastSubmittedAt && (
-            <span className="pill ok"><TickIcon />Modelo em dia</span>
-          )
+          <span className="hint md-last-submit">Nenhuma versão ainda</span>
         )}
-        <button className="btn" type="button" disabled title="Em breve"><SaveVersionIcon />Salvar versão</button>
+        {changes && pending > 0 && (
+          <span className="pill w" title={describe(changes.summary)}>
+            <span className="dot" />
+            {pending === 1 ? '1 alteração' : `${pending} alterações`}
+            {changes.baseVersion ? ` desde a v${changes.baseVersion}` : ' não submetidas'}
+          </span>
+        )}
+        {changes && pending === 0 && project.latestVersion && (
+          <span className="pill ok"><TickIcon />Modelo em dia</span>
+        )}
+        <button className="btn" type="button" onClick={openShare}>
+          <MembersIcon />
+          Compartilhar
+        </button>
         {canEdit && (
           <button
             className="btn p"
             type="button"
-            disabled={drafts === 0}
-            title={drafts === 0 ? 'Não há alterações para submeter' : undefined}
+            disabled={pending === 0}
+            title={pending === 0 ? 'Não há alterações desde a última versão' : undefined}
             onClick={() => setSubmitting(true)}
           >
             <UploadIcon />
-            Submeter modelo
+            Submeter versão
           </button>
         )}
-      </header>
+      </PageHeader>
 
-      {submitting && (
-        <SubmitModelDialog
+      {submitting && changes && (
+        <SubmitVersionDialog
           projectId={project.id}
+          changes={changes}
           elements={elements}
-          relationships={relationships}
           onClose={() => setSubmitting(false)}
           onSubmitted={() => setSubmitting(false)}
         />
