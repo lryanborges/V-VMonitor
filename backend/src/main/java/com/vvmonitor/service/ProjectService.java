@@ -85,10 +85,10 @@ public class ProjectService {
                 .findFirst()
                 .orElseThrow(() -> new ProjectNotFoundException(project.getId()));
         String ownerName = nameOf(project.getOwnerId(), members);
-        ProjectResponse.PersonSummary submittedBy = project.getLastSubmittedBy() == null
+        // a ultima submissao e a ultima versao (RF10 + RF17)
+        ProjectResponse.PersonSummary submittedBy = stats.latestVersionBy() == null
                 ? null
-                : new ProjectResponse.PersonSummary(project.getLastSubmittedBy(),
-                        nameOf(project.getLastSubmittedBy(), members));
+                : new ProjectResponse.PersonSummary(stats.latestVersionBy(), stats.latestVersionByName());
 
         return new ProjectResponse(
                 project.getId(),
@@ -102,13 +102,13 @@ public class ProjectService {
                 ProjectResponse.Stats.of(stats.requirements(), stats.businessRules(), stats.tests(),
                         stats.requirementsWithTests()),
                 stats.latestVersion(),
-                project.getLastSubmittedAt(),
+                stats.latestVersionAt(),
                 submittedBy,
                 project.getCreatedAt(),
                 project.getUpdatedAt());
     }
 
-    /** Nome de um membro do projeto (ex.: dono, quem submeteu); null se a pessoa nao for mais membro. */
+    /** Nome de um membro do projeto (ex.: dono); null se a pessoa nao for mais membro. */
     private static String nameOf(UUID userId, List<MemberView> members) {
         return members.stream().filter(m -> m.userId().equals(userId)).map(MemberView::name).findFirst().orElse(null);
     }

@@ -1,6 +1,6 @@
 # Schema do banco de dados, V&V Monitor
 
-Banco: PostgreSQL 16. Migrações versionadas com Flyway: `V1__schema_inicial` (tabelas) e `V2__ultima_submissao` (ultima submissao em `projects`).
+Banco: PostgreSQL 16. Migrações versionadas com Flyway: `V1__schema_inicial` (tabelas), `V2__ultima_submissao` (ultima submissao em `projects`) e `V3__versoes_do_modelo` (submeter passa a gerar versao; remove `submission_status` e as colunas da V2).
 
 ## Convenções
 
@@ -21,7 +21,6 @@ Banco: PostgreSQL 16. Migrações versionadas com Flyway: `V1__schema_inicial` (
 | element_kind | `FUNCTIONAL`, `NON_FUNCTIONAL`, `BUSINESS_RULE` |
 | sequence_kind | `FUNCTIONAL`, `NON_FUNCTIONAL`, `BUSINESS_RULE`, `TEST` |
 | priority | `MANDATORY`, `DESIRABLE`, `OPTIONAL` |
-| submission_status | `DRAFT`, `SUBMITTED` |
 | test_status | `NOT_RUN`, `PASSED`, `FAILED` |
 
 ## Tabelas
@@ -48,8 +47,6 @@ Banco: PostgreSQL 16. Migrações versionadas com Flyway: `V1__schema_inicial` (
 | name | varchar(150) | NOT NULL |
 | description | text | NULL |
 | owner_id | uuid | NOT NULL, FK → users |
-| last_submitted_at | timestamptz | NULL; ultima submissao do modelo (RF10, migracao V2) |
-| last_submitted_by | uuid | NULL, FK → users; quem submeteu (os dois campos andam juntos: CHECK `ck_projects_last_submission`) |
 | created_at | timestamptz | NOT NULL |
 | updated_at | timestamptz | NOT NULL |
 | deleted_at | timestamptz | NULL |
@@ -80,7 +77,6 @@ Requisitos funcionais, não funcionais e regras de negócio numa tabela única, 
 | code | varchar(20) | NOT NULL (ex.: RF3, RNF1, RN2) |
 | description | text | NOT NULL |
 | priority | priority | NULL; obrigatório para requisitos, nulo para regras de negócio (CHECK) |
-| submission_status | submission_status | NOT NULL, default `DRAFT` |
 | created_by | uuid | NOT NULL, FK → users |
 | created_at | timestamptz | NOT NULL |
 | updated_at | timestamptz | NOT NULL |
@@ -123,7 +119,6 @@ Seed na migração inicial: Dependência (direcional), Conflito (simétrico), Re
 | source_id | uuid | NOT NULL, FK → elements |
 | target_id | uuid | NOT NULL, FK → elements |
 | type_id | uuid | NOT NULL, FK → relationship_types |
-| submission_status | submission_status | NOT NULL, default `DRAFT` |
 | created_by | uuid | NOT NULL, FK → users |
 | created_at | timestamptz | NOT NULL |
 | deleted_at | timestamptz | NULL |
@@ -168,12 +163,14 @@ Para tipos simétricos, a aplicação grava o par em ordem fixa (menor UUID como
 | project_id | uuid | NOT NULL, FK → projects |
 | version_number | int | NOT NULL |
 | label | varchar(100) | NULL |
-| snapshot | jsonb | NOT NULL (elementos, relacionamentos, testes e coberturas) |
+| snapshot | jsonb | NOT NULL; `format` (1), `elements`, `relationships`, `types` (tipos usados) e `changes` (adicionados/alterados/removidos em relação à versão anterior). Testes entram num formato futuro (RF9) |
 | created_by | uuid | NOT NULL, FK → users |
 | created_at | timestamptz | NOT NULL |
 
 Índices: único `(project_id, version_number)`.
 Imutável: sem `deleted_at`; trigger bloqueia UPDATE e DELETE.
+
+Submeter o modelo (RF10 + RF17) grava a próxima versão. O que está pendente ("rascunho") não é gravado: é calculado comparando o modelo atual com o `snapshot` da última versão (adicionado, alterado ou removido). A "última submissão" do projeto é a última versão (`created_at`, `created_by`).
 
 ## Fora do escopo inicial (migrações futuras)
 

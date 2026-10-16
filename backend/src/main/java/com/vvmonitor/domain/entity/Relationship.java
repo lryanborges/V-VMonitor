@@ -1,10 +1,7 @@
 package com.vvmonitor.domain.entity;
 
-import com.vvmonitor.domain.enums.SubmissionStatus;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.SQLDelete;
@@ -32,10 +29,6 @@ public class Relationship extends SoftDeletableEntity {
     @Column(name = "type_id", nullable = false)
     private UUID typeId;
 
-    @Enumerated(EnumType.STRING)
-    @Column(name = "submission_status", nullable = false, length = 10)
-    private SubmissionStatus submissionStatus;
-
     @Column(name = "created_by", nullable = false, updatable = false)
     private UUID createdBy;
 
@@ -47,25 +40,23 @@ public class Relationship extends SoftDeletableEntity {
         // exigido pelo JPA
     }
 
-    /** Nova relacao entra no modelo atual como rascunho, como os elementos. */
+    /** Nova relacao entra no modelo atual; como os elementos, fica pendente ate a proxima versao. */
     public Relationship(UUID projectId, UUID sourceId, UUID targetId, UUID typeId, UUID createdBy) {
         this.projectId = projectId;
         this.sourceId = sourceId;
         this.targetId = targetId;
         this.typeId = typeId;
-        this.submissionStatus = SubmissionStatus.DRAFT;
         this.createdBy = createdBy;
     }
 
     /**
      * RF14: troca o tipo e/ou a ordem das pontas (as pontas sao as mesmas; ligar a outro elemento e outra relacao).
-     * Como no elemento, a edicao volta a ser uma alteracao pendente.
+     * Como no elemento, fica pendente ate a proxima versao.
      */
     public void update(UUID typeId, UUID sourceId, UUID targetId) {
         this.typeId = typeId;
         this.sourceId = sourceId;
         this.targetId = targetId;
-        this.submissionStatus = SubmissionStatus.DRAFT;
     }
 
     public boolean touches(UUID elementId) {
@@ -91,10 +82,6 @@ public class Relationship extends SoftDeletableEntity {
 
     public UUID getTypeId() {
         return typeId;
-    }
-
-    public SubmissionStatus getSubmissionStatus() {
-        return submissionStatus;
     }
 
     public UUID getCreatedBy() {

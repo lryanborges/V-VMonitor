@@ -27,6 +27,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -47,6 +48,7 @@ class ElementServiceTest {
     private CodeSequenceRepository codeSequenceRepository;
     private ProjectRepository projectRepository;
     private ProjectMemberRepository memberRepository;
+    private VersionService versionService;
     private ElementService elementService;
 
     @BeforeEach
@@ -56,8 +58,9 @@ class ElementServiceTest {
         codeSequenceRepository = mock(CodeSequenceRepository.class);
         projectRepository = mock(ProjectRepository.class);
         memberRepository = mock(ProjectMemberRepository.class);
+        versionService = mock(VersionService.class);
         elementService = new ElementService(elementRepository, statsRepository, codeSequenceRepository,
-                projectRepository, new ProjectAccessService(memberRepository));
+                projectRepository, new ProjectAccessService(memberRepository), versionService);
 
         when(memberRepository.findByProjectIdAndUserId(any(), any())).thenReturn(Optional.empty());
         when(elementRepository.saveAndFlush(any(Element.class))).thenAnswer(inv -> inv.getArgument(0));
@@ -181,12 +184,13 @@ class ElementServiceTest {
     }
 
     @Test
-    void edicaoAtualizaDescricaoEPrioridadeEVoltaParaRascunho() {
+    void edicaoAtualizaDescricaoEPrioridadeEFicaPendente() {
         loggedAs(MemberRole.EDITOR);
         Element rf2 = element(ElementKind.FUNCTIONAL, "RF2");
-        ReflectionTestUtils.setField(rf2, "submissionStatus", SubmissionStatus.SUBMITTED);
         when(elementRepository.findByIdAndProjectId(rf2.getId(), projectId)).thenReturn(Optional.of(rf2));
         when(statsRepository.findByProjectId(projectId)).thenReturn(Map.of());
+        // depois da edicao, a comparacao com a ultima versao aponta o elemento como alterado
+        when(versionService.pendingIds(projectId)).thenReturn(Set.of(rf2.getId()));
 
         ElementResponse response = elementService.update(projectId, rf2.getId(), userId,
                 new UpdateElementRequest("  Nova descrição ", Priority.OPTIONAL));

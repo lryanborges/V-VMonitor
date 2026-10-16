@@ -22,4 +22,13 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, UU
             order by m.addedAt
             """)
     List<MemberView> findMembersOf(@Param("projectIds") Collection<UUID> projectIds);
+
+    /** RF20: pessoas com acesso a um projeto, com e-mail, na ordem em que entraram (o dono primeiro). */
+    @Query("""
+            select new com.vvmonitor.infra.repository.MemberDetailView(u.id, u.name, u.email, m.role, m.addedAt)
+            from ProjectMember m join User u on u.id = m.userId
+            where m.projectId = :projectId
+            order by m.addedAt
+            """)
+    List<MemberDetailView> findDetailsOf(@Param("projectId") UUID projectId);
 }

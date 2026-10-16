@@ -31,6 +31,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -53,6 +54,7 @@ class RelationshipServiceTest {
     private ProjectMemberRepository memberRepository;
     private RelationshipService service;
 
+    private VersionService versionService;
     private Element rf7;
     private Element rf5;
     private RelationshipType dependencia;
@@ -65,8 +67,9 @@ class RelationshipServiceTest {
         elementRepository = mock(ElementRepository.class);
         projectRepository = mock(ProjectRepository.class);
         memberRepository = mock(ProjectMemberRepository.class);
+        versionService = mock(VersionService.class);
         service = new RelationshipService(relationshipRepository, typeRepository, elementRepository,
-                projectRepository, new ProjectAccessService(memberRepository));
+                projectRepository, new ProjectAccessService(memberRepository), versionService);
 
         when(memberRepository.findByProjectIdAndUserId(any(), any())).thenReturn(Optional.empty());
         when(elementRepository.findByIdAndProjectId(any(), any())).thenReturn(Optional.empty());
@@ -243,23 +246,23 @@ class RelationshipServiceTest {
     private Relationship existing(Element source, RelationshipType type, Element target) {
         Relationship r = new Relationship(projectId, source.getId(), target.getId(), type.getId(), userId);
         ReflectionTestUtils.setField(r, "id", UUID.randomUUID());
-        ReflectionTestUtils.setField(r, "submissionStatus", SubmissionStatus.SUBMITTED);
         when(relationshipRepository.findByIdAndProjectId(r.getId(), projectId)).thenReturn(Optional.of(r));
         return r;
     }
 
     @Test
-    void edicaoTrocaTipoEVoltaParaRascunho() {
+    void edicaoTrocaTipoEFicaPendente() {
         loggedAs(MemberRole.EDITOR);
         RelationshipType refinamento = predefined("Refinamento", false);
         Relationship r = existing(rf7, dependencia, rf5);
+        when(versionService.pendingIds(projectId)).thenReturn(Set.of(r.getId()));
 
         RelationshipResponse response = service.update(projectId, r.getId(), userId,
                 new UpdateRelationshipRequest(refinamento.getId(), false));
 
         assertThat(response.type().name()).isEqualTo("Refinamento");
         assertThat(response.source().code()).isEqualTo("RF7");
-        assertThat(r.getSubmissionStatus()).isEqualTo(SubmissionStatus.DRAFT);
+        assertThat(response.submissionStatus()).isEqualTo(SubmissionStatus.DRAFT);
         verify(projectRepository).touch(projectId);
     }
 

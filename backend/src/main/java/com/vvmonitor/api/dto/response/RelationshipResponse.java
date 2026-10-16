@@ -19,9 +19,9 @@ public record RelationshipResponse(
 ) {
 
     public static RelationshipResponse from(Relationship relationship, RelationshipType type, Element source,
-                                            Element target) {
+                                            Element target, boolean pending) {
         return new RelationshipResponse(relationship.getId(), RelationshipTypeResponse.from(type),
-                ElementSummary.from(source), ElementSummary.from(target), relationship.getSubmissionStatus(),
+                ElementSummary.from(source), ElementSummary.from(target), SubmissionStatus.of(pending),
                 relationship.getCreatedAt());
     }
 }
