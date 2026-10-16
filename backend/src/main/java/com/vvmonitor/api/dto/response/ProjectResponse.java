@@ -19,7 +19,7 @@ public record ProjectResponse(
         List<MemberSummary> members,
         Stats stats,
         Integer latestVersion,
-        /** RF10: ultima submissao do modelo; nulos ate a primeira. */
+        /** RF10 + RF17: ultima versao (numero, quando e por quem); nulos ate a primeira. */
         Instant lastSubmittedAt,
         PersonSummary lastSubmittedBy,
         Instant createdAt,

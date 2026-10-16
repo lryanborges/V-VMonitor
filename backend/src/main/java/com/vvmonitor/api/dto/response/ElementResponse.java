@@ -23,9 +23,10 @@ public record ElementResponse(
         Instant updatedAt
 ) {
 
-    public static ElementResponse from(Element element, ElementStats stats) {
+    /** pending: difere da ultima versao (adicionado ou alterado desde entao), exibido como rascunho. */
+    public static ElementResponse from(Element element, ElementStats stats, boolean pending) {
         return new ElementResponse(element.getId(), element.getCode(), element.getKind(), element.getDescription(),
-                element.getPriority(), element.getSubmissionStatus(), stats.links(), stats.tests(),
+                element.getPriority(), SubmissionStatus.of(pending), stats.links(), stats.tests(),
                 element.getCreatedAt(), element.getUpdatedAt());
     }
 }
