@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import type { ChangeSummary, Element, ModelChanges, Project } from '../../api/types'
 import { PageHeader } from '../../components/PageHeader'
-import { GraphIcon, ListIcon, MatrixIcon, MembersIcon, TickIcon, UploadIcon } from '../../components/icons'
-import { useOpenShare } from '../../layouts/shareContext'
+import { GraphIcon, ListIcon, MatrixIcon, TickIcon, UploadIcon } from '../../components/icons'
 import { timeAgo } from '../../utils/format'
 import { SubmitVersionDialog } from './SubmitVersionDialog'
 import './ModelHeader.css'
@@ -34,7 +33,6 @@ function describe(s: ChangeSummary) {
  */
 export function ModelHeader({ project, view, elements, changes }: ModelHeaderProps) {
   const [submitting, setSubmitting] = useState(false)
-  const openShare = useOpenShare()
   const canEdit = project.role !== 'VIEWER'
   const base = `/projetos/${project.id}`
   // o elemento selecionado (?el=) acompanha a troca de visualizacao
@@ -89,10 +87,6 @@ export function ModelHeader({ project, view, elements, changes }: ModelHeaderPro
         {changes && pending === 0 && project.latestVersion && (
           <span className="pill ok"><TickIcon />Modelo em dia</span>
         )}
-        <button className="btn" type="button" onClick={openShare}>
-          <MembersIcon />
-          Compartilhar
-        </button>
         {canEdit && (
           <button
             className="btn p"

@@ -224,13 +224,6 @@
   border-radius: 0;
 }
 
-.gr-zoom-n {
-  font-size: 11px;
-  text-align: center;
-  color: var(--mt);
-  padding: 2px 0;
-}
-
 .gr-zoom-fit {
   border-top: 1px solid var(--bd);
 }
@@ -254,10 +247,29 @@
 .gr-elabel.pending { opacity: .55; }
 
 /* zoom editavel: clicar na porcentagem vira campo */
-.gr-zoom-n {
+/*
+ * numero do zoom e campo de edicao ocupam exatamente a mesma caixa (36px, a largura dos botoes, por 22px),
+ * para o controle nao mudar de tamanho ao alternar entre os dois. A largura e fixa porque um campo de texto
+ * tem largura propria e alargaria a coluna.
+ */
+.gr-zoom-n,
+.gr-zoom-input {
+  display: block;
+  width: 36px;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
   border: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  line-height: 22px;
+  text-align: center;
+}
+
+.gr-zoom-n {
   background: transparent;
-  font: inherit;
+  color: var(--mt);
   cursor: text;
 }
 
@@ -267,15 +279,26 @@
 }
 
 .gr-zoom-input {
-  width: 44px;
-  height: 22px;
-  margin: 0 auto;
-  border: 1px solid var(--ac);
-  border-radius: 4px;
+  min-width: 0;
   background: var(--sf);
   color: var(--fg);
-  font-family: var(--font-mono);
-  font-size: 11px;
-  text-align: center;
+  /* contorno por dentro, sem somar ao tamanho */
+  box-shadow: inset 0 0 0 1px var(--ac);
   outline: none;
+}
+
+/* testes (RF9): no verde, ligado aos requisitos que cobre por linha pontilhada "testa" */
+.gr-node.t { border-color: var(--ts); color: var(--ts); border-radius: 7px; }
+.gr-node.t.hl { background: var(--tss); box-shadow: var(--sh), 0 0 0 4px var(--tss); }
+.gr-node.t.orphan { border-color: var(--wr); color: var(--wr); }
+
+.gr-e.test { stroke: var(--ts); stroke-dasharray: 2 4; stroke-linecap: round; stroke-width: 1.6; }
+.gr-e.test.hl { stroke-width: 2.4; stroke-opacity: 1; }
+.gr-e.test.pending { stroke-opacity: .5; }
+.gr-arrow.test { fill: var(--ts); }
+.gr-elabel.test { color: var(--ts); }
+
+.gr-test-sample {
+  width: 26px;
+  border-top: 2px dotted var(--ts);
 }

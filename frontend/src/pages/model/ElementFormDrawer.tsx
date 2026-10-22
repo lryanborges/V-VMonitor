@@ -3,11 +3,12 @@ import { useState, type FormEvent } from 'react'
 import { ApiError } from '../../api/client'
 import { elementKeys, elementsApi } from '../../api/elements'
 import { projectKeys } from '../../api/projects'
-import type { Element, ElementKind, Priority } from '../../api/types'
+import type { Element, ElementKind, Priority, Relationship, VersionedTest } from '../../api/types'
 import { Drawer } from '../../components/Drawer'
 import { FieldError } from '../../components/FieldError'
 import { InfoIcon } from '../../components/icons'
 import { KINDS, PRIORITIES, kindInfo } from '../../utils/labels'
+import { EditImpactPanel } from './EditImpactPanel'
 import './ElementFormDrawer.css'
 
 const FORM_ID = 'form-elemento'
@@ -16,6 +17,9 @@ interface ElementFormDrawerProps {
   projectId: string
   /** Ausente: cadastra um novo elemento. Presente: edita este elemento (RF14). */
   element?: Element
+  /** Na edicao: relacoes e testes do projeto, para mostrar o que pode ser afetado (RF16). */
+  relationships?: Relationship[]
+  tests?: VersionedTest[]
   onClose: () => void
   onSaved: (element: Element) => void
 }
@@ -24,7 +28,7 @@ interface ElementFormDrawerProps {
  * Cadastro (RF5, RF6, UC-05, UC-07) e edicao (RF14) de requisitos e regras de negocio, em painel lateral.
  * Na edicao, tipo e codigo ficam fixos: so descricao e prioridade mudam.
  */
-export function ElementFormDrawer({ projectId, element, onClose, onSaved }: ElementFormDrawerProps) {
+export function ElementFormDrawer({ projectId, element, relationships, tests, onClose, onSaved }: ElementFormDrawerProps) {
   const queryClient = useQueryClient()
   const editing = !!element
   const [kind, setKind] = useState<ElementKind>(element?.kind ?? 'FUNCTIONAL')
@@ -175,14 +179,18 @@ export function ElementFormDrawer({ projectId, element, onClose, onSaved }: Elem
         )}
 
         {fieldErrors.kind && <FieldError>{fieldErrors.kind}</FieldError>}
+
+        {element && relationships && (
+          <EditImpactPanel elementId={element.id} relationships={relationships} tests={tests ?? []} />
+        )}
         {generalError && <FieldError>{generalError}</FieldError>}
 
         <div className="nr-note">
           <InfoIcon />
           <span>
             {editing
-              ? 'A alteração volta a ficar pendente: o grafo e a matriz mostram a versão nova depois que você submeter o modelo.'
-              : 'O elemento entra no modelo atual. Ele aparece no grafo e na matriz depois que você submeter o modelo.'}
+              ? 'A alteração vale na hora e fica pendente até a próxima versão do modelo.'
+              : 'O elemento entra no modelo atual e fica pendente até a próxima versão do modelo.'}
           </span>
         </div>
       </form>

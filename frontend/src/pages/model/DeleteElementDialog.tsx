@@ -4,6 +4,7 @@ import { ApiError } from '../../api/client'
 import { elementKeys, elementsApi } from '../../api/elements'
 import { projectKeys } from '../../api/projects'
 import { relationshipKeys } from '../../api/relationships'
+import { testKeys } from '../../api/tests'
 import type { Element, ElementSummary, ImpactLevel } from '../../api/types'
 import { FieldError } from '../../components/FieldError'
 import { AlertIcon, GraphIcon, InfoIcon, TrashIcon } from '../../components/icons'
@@ -52,6 +53,8 @@ export function DeleteElementDialog({ projectId, element, onClose, onDeleted }: 
   const queryClient = useQueryClient()
   const [typed, setTyped] = useState('')
 
+  // testes que ficariam sem requisito: por padrao continuam (como "sem requisito"); o ator pode excluir junto
+  const [deleteOrphanTests, setDeleteOrphanTests] = useState(false)
   const impact = useQuery({
     queryKey: elementKeys.impact(projectId, element.id),
     queryFn: () => elementsApi.deleteImpact(projectId, element.id),
@@ -60,8 +63,9 @@ export function DeleteElementDialog({ projectId, element, onClose, onDeleted }: 
   })
 
   const remove = useMutation({
-    mutationFn: () => elementsApi.remove(projectId, element.id),
+    mutationFn: () => elementsApi.remove(projectId, element.id, deleteOrphanTests),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: testKeys.all(projectId) })
       queryClient.invalidateQueries({ queryKey: elementKeys.all(projectId) })
       queryClient.invalidateQueries({ queryKey: relationshipKeys.all(projectId) })
       queryClient.invalidateQueries({ queryKey: projectKeys.all })
@@ -176,6 +180,14 @@ export function DeleteElementDialog({ projectId, element, onClose, onDeleted }: 
                     {data.testsLeftWithoutRequirement.length === 1 ? 'Ele cobre' : 'Eles cobrem'} apenas {element.code} e{' '}
                     {data.testsLeftWithoutRequirement.length === 1 ? 'deixa' : 'deixam'} de rastrear algum requisito.
                   </span>
+                  <label className="ded-check">
+                    <input
+                      type="checkbox"
+                      checked={deleteOrphanTests}
+                      onChange={(e) => setDeleteOrphanTests(e.target.checked)}
+                    />
+                    {data.testsLeftWithoutRequirement.length === 1 ? 'Excluir também este teste' : 'Excluir também estes testes'}
+                  </label>
                 </Impact>
               )}
 

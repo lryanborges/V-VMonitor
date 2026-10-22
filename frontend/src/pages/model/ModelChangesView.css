@@ -93,3 +93,9 @@
 .chg-group.removed .chg-verb {
   text-decoration: line-through;
 }
+
+.chg-covers {
+  flex-shrink: 0;
+  font-size: 12px;
+  white-space: nowrap;
+}

@@ -51,10 +51,6 @@
   gap: 8px;
 }
 
-.ep-stats.two {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
-
 .ep-stats > div {
   display: flex;
   flex-direction: column;
@@ -152,4 +148,9 @@
   .ep {
     display: none;
   }
+}
+
+/* RF13: requisito sem teste */
+.ep-untested {
+  color: var(--wr);
 }

@@ -4,6 +4,7 @@ import { Link, useParams, useSearchParams } from 'react-router'
 import { ApiError } from '../../api/client'
 import { versionKeys, versionsApi, type CompareWith } from '../../api/versions'
 import { FieldError } from '../../components/FieldError'
+import { HistoryIcon } from '../../components/icons'
 import { PageHeader } from '../../components/PageHeader'
 import { useProject } from '../../layouts/useProject'
 import { versionModel } from '../../utils/versions'
@@ -12,6 +13,7 @@ import { ElementTable } from '../model/ElementTable'
 import { KindTabs, type KindFilter } from '../model/KindTabs'
 import { ModelChangesView } from '../model/ModelChangesView'
 import { ChangeCounts } from './ChangeCounts'
+import { RestoreVersionDialog } from './RestoreVersionDialog'
 import './Versions.css'
 
 type Tab = 'elements' | 'compare'
@@ -32,6 +34,8 @@ function VersionView({ number }: { number: number }) {
   const [tab, setTab] = useState<Tab>('elements')
   const [filter, setFilter] = useState<KindFilter>('all')
   const [against, setAgainst] = useState<CompareWith>('previous')
+  const [restoring, setRestoring] = useState(false)
+  const canEdit = project.role !== 'VIEWER'
   const base = `/projetos/${project.id}`
 
   const version = useQuery({
@@ -78,7 +82,15 @@ function VersionView({ number }: { number: number }) {
         )}
         <div style={{ flex: 1 }} />
         <span className="pill" title="Versões não mudam depois de gravadas (RNF2).">Só leitura</span>
+        {canEdit && info && (
+          <button className="btn" type="button" onClick={() => setRestoring(true)}>
+            <HistoryIcon />
+            Restaurar esta versão
+          </button>
+        )}
       </PageHeader>
+
+      {restoring && <RestoreVersionDialog projectId={project.id} number={number} onClose={() => setRestoring(false)} />}
 
       <div className="vs-body">
         <section className="vs-content">
@@ -133,7 +145,8 @@ function VersionView({ number }: { number: number }) {
                   elements={rows}
                   selectedId={selected?.id ?? null}
                   onSelect={(id) => select(id)}
-                  showTests={false}
+                  // versoes anteriores aos testes (RF9) nao guardam testes: a coluna so confundiria
+                  showTests={(info?.tests ?? 0) > 0}
                   label={`Elementos da v${number}`}
                 >
                   {rows.length === 0 && (
@@ -160,6 +173,7 @@ function VersionView({ number }: { number: number }) {
                       <ModelChangesView
                         elements={comparison.data.elements}
                         relationships={comparison.data.relationships}
+                        tests={comparison.data.tests}
                       />
                     </>
                   )}
@@ -175,6 +189,7 @@ function VersionView({ number }: { number: number }) {
             element={selected}
             elements={model.elements}
             relationships={model.relationships}
+            tests={model.tests}
             canEdit={false}
             onSelect={select}
             emptyHint={`Selecione um elemento para ver como ele estava na v${number}.`}

@@ -27,6 +27,10 @@ export const versionsApi = {
 
   get: (projectId: string, number: number) => api<Version>(`${base(projectId)}/versions/${number}`),
 
+  /** RF22 (proposto): o modelo atual volta a ser igual ao da versao; nao cria versao nova. */
+  restore: (projectId: string, number: number) =>
+    api<void>(`${base(projectId)}/versions/${number}/restore`, { method: 'POST' }),
+
   /** RF18: mudancas entre a versao e outra (sempre da mais antiga para a mais nova) ou o modelo atual. */
   compare: (projectId: string, number: number, against: CompareWith) =>
     api<ModelChanges>(`${base(projectId)}/versions/${number}/compare?with=${against}`),

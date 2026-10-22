@@ -1,5 +1,5 @@
 import { Graph, layout } from '@dagrejs/dagre'
-import type { Element, Relationship } from '../api/types'
+import type { Element } from '../api/types'
 
 export const NODE_HEIGHT = 30
 
@@ -8,28 +8,36 @@ export function nodeWidth(element: Element): number {
   return element.code.length * 8 + 46
 }
 
+/** Largura do no de teste (RF9): so o codigo T, sem bolinha de cobertura. */
+export function testNodeWidth(code: string): number {
+  return code.length * 8 + 26
+}
+
+/** No e ligacao a posicionar: elementos e testes, relacoes e coberturas (teste -> requisito). */
+export type LayoutNode = { id: string; width: number }
+export type LayoutEdge = { source: string; target: string }
+
 /**
- * Disposicao em camadas (RF11) calculada pelo dagre. Com rankdir RL a origem de cada relacao fica a direita
- * e o destino a esquerda: requisitos de base e regras a esquerda, quem depende deles mais a direita, como no design.
- * Devolve o canto superior esquerdo de cada no (o formato que o React Flow espera).
+ * Disposicao em camadas (RF11) calculada pelo dagre. Com rankdir RL a origem de cada ligacao fica a direita
+ * e o destino a esquerda: requisitos de base e regras a esquerda, quem depende deles mais a direita, como no
+ * design; os testes ficam a direita dos requisitos que cobrem. Devolve o canto superior esquerdo de cada no
+ * (o formato que o React Flow espera).
  */
-export function layoutGraph(elements: Element[], relationships: Relationship[]): Map<string, { x: number; y: number }> {
+export function layoutGraph(nodes: LayoutNode[], edges: LayoutEdge[]): Map<string, { x: number; y: number }> {
   const g = new Graph()
   g.setGraph({ rankdir: 'RL', nodesep: 26, ranksep: 90, marginx: 20, marginy: 20 })
   g.setDefaultEdgeLabel(() => ({}))
 
-  const ids = new Set(elements.map((e) => e.id))
-  elements.forEach((e) => g.setNode(e.id, { width: nodeWidth(e), height: NODE_HEIGHT }))
-  relationships
-    .filter((r) => ids.has(r.source.id) && ids.has(r.target.id))
-    .forEach((r) => g.setEdge(r.source.id, r.target.id))
+  const ids = new Set(nodes.map((n) => n.id))
+  nodes.forEach((n) => g.setNode(n.id, { width: n.width, height: NODE_HEIGHT }))
+  edges.filter((e) => ids.has(e.source) && ids.has(e.target)).forEach((e) => g.setEdge(e.source, e.target))
 
   layout(g)
 
   const positions = new Map<string, { x: number; y: number }>()
-  elements.forEach((e) => {
-    const n = g.node(e.id) as { x: number; y: number }
-    positions.set(e.id, { x: n.x - nodeWidth(e) / 2, y: n.y - NODE_HEIGHT / 2 })
+  nodes.forEach((n) => {
+    const p = g.node(n.id) as { x: number; y: number }
+    positions.set(n.id, { x: p.x - n.width / 2, y: p.y - NODE_HEIGHT / 2 })
   })
   return positions
 }

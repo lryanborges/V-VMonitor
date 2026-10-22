@@ -2,9 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router'
 import { versionKeys, versionsApi } from '../../api/versions'
 import { FieldError } from '../../components/FieldError'
-import { MembersIcon } from '../../components/icons'
 import { PageHeader } from '../../components/PageHeader'
-import { useOpenShare } from '../../layouts/shareContext'
 import { useProject } from '../../layouts/useProject'
 import { timeAgo } from '../../utils/format'
 import { ChangeCounts } from './ChangeCounts'
@@ -13,26 +11,14 @@ import './Versions.css'
 /** RF18: versoes do projeto, mais recentes primeiro. Cada uma abre o modelo como estava naquele momento. */
 export function VersionsPage() {
   const project = useProject()
-  const openShare = useOpenShare()
   const base = `/projetos/${project.id}`
   const versions = useQuery({ queryKey: versionKeys.all(project.id), queryFn: () => versionsApi.list(project.id) })
 
   return (
     <>
-      <PageHeader title="Versões">
-        <div style={{ flex: 1 }} />
-        <button className="btn" type="button" onClick={openShare}>
-          <MembersIcon />
-          Compartilhar
-        </button>
-      </PageHeader>
+      <PageHeader title="Versões" />
 
       <section className="vs-content">
-        <p className="hint">
-          Cada submissão do modelo grava uma versão que não muda mais. Abra uma versão para ver o modelo como estava
-          e comparar com outra versão ou com o modelo atual.
-        </p>
-
         {versions.isPending && <p className="hint">Carregando versões…</p>}
         {versions.isError && <FieldError>{versions.error.message}</FieldError>}
 
@@ -62,6 +48,7 @@ export function VersionsPage() {
                   <span className="hint vs-totals">
                     {v.elements} {v.elements === 1 ? 'elemento' : 'elementos'} · {v.relationships}{' '}
                     {v.relationships === 1 ? 'relacionamento' : 'relacionamentos'}
+                    {v.tests > 0 && ` · ${v.tests} ${v.tests === 1 ? 'teste' : 'testes'}`}
                   </span>
                   <ChangeCounts changes={v.changes} />
                 </Link>

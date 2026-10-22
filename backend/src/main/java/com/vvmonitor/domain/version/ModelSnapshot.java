@@ -3,6 +3,7 @@ package com.vvmonitor.domain.version;
 import com.vvmonitor.domain.entity.Element;
 import com.vvmonitor.domain.entity.Relationship;
 import com.vvmonitor.domain.entity.RelationshipType;
+import com.vvmonitor.domain.entity.TestCase;
 import com.vvmonitor.domain.enums.ElementKind;
 import com.vvmonitor.domain.enums.Priority;
 
@@ -15,23 +16,29 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
- * Copia do modelo de um projeto num instante (RF17): elementos, relacoes e os tipos usados por elas.
- * E o conteudo gravado em project_versions.snapshot (imutavel, RNF2) e tambem a forma de comparar o
- * modelo atual com a ultima versao. format permite evoluir o conteudo (ex.: testes, RF9) sem quebrar
- * versoes antigas; changes resume o que mudou em relacao a versao anterior.
+ * Copia do modelo de um projeto num instante (RF17): elementos, relacoes, os tipos usados por elas e os testes
+ * com os requisitos que cobrem. E o conteudo gravado em project_versions.snapshot (imutavel, RNF2) e tambem a
+ * forma de comparar o modelo atual com a ultima versao. format 1 = sem testes (versoes anteriores ao RF9, lidas
+ * com a lista de testes vazia); format 2 = com testes. changes resume o que mudou em relacao a versao anterior.
  */
 public record ModelSnapshot(
         int format,
         List<ElementSnapshot> elements,
         List<RelationshipSnapshot> relationships,
         List<TypeSnapshot> types,
+        List<TestSnapshot> tests,
         ChangeSummary changes
 ) {
 
-    public static final int FORMAT = 1;
+    public static final int FORMAT = 2;
 
     /** Modelo antes da primeira versao: tudo o que existe conta como adicionado. */
-    public static final ModelSnapshot EMPTY = new ModelSnapshot(FORMAT, List.of(), List.of(), List.of(), null);
+    public static final ModelSnapshot EMPTY = new ModelSnapshot(FORMAT, List.of(), List.of(), List.of(), List.of(), null);
+
+    public ModelSnapshot {
+        // versoes de formato 1 nao tem testes
+        tests = tests == null ? List.of() : tests;
+    }
 
     public record ElementSnapshot(UUID id, String code, ElementKind kind, String description, Priority priority) {
 
@@ -49,6 +56,10 @@ public record ModelSnapshot(
         }
     }
 
+    /** Teste com os requisitos que cobre (ids em ordem, para a comparacao nao depender da ordem de gravacao). */
+    public record TestSnapshot(UUID id, String code, String description, List<UUID> elementIds) {
+    }
+
     public record TypeSnapshot(UUID id, String name, boolean symmetric, boolean custom) {
 
         static TypeSnapshot of(RelationshipType type) {
@@ -63,6 +74,13 @@ public record ModelSnapshot(
      */
     public static ModelSnapshot of(Collection<Element> elements, Collection<Relationship> relationships,
                                    Map<UUID, RelationshipType> types) {
+        return of(elements, relationships, types, List.of(), Map.of());
+    }
+
+    /** Com os testes; coverage: id do teste -> requisitos cobertos (os que nao existem mais sao ignorados). */
+    public static ModelSnapshot of(Collection<Element> elements, Collection<Relationship> relationships,
+                                   Map<UUID, RelationshipType> types, Collection<TestCase> tests,
+                                   Map<UUID, List<UUID>> coverage) {
         Map<UUID, Element> byId = elements.stream().collect(Collectors.toMap(Element::getId, Function.identity()));
         List<Relationship> valid = relationships.stream()
                 .filter(r -> byId.containsKey(r.getSourceId()) && byId.containsKey(r.getTargetId()))
@@ -85,12 +103,21 @@ public record ModelSnapshot(
                         .map(TypeSnapshot::of)
                         .sorted(Comparator.comparing(TypeSnapshot::id))
                         .toList(),
+                tests.stream()
+                        .sorted(Comparator.comparingInt(TestCase::codeNumber))
+                        .map(t -> new TestSnapshot(t.getId(), t.getCode(), t.getDescription(),
+                                coverage.getOrDefault(t.getId(), List.of()).stream()
+                                        .filter(byId::containsKey)
+                                        .distinct()
+                                        .sorted()
+                                        .toList()))
+                        .toList(),
                 null);
     }
 
     /** A mesma copia, com o resumo das mudancas em relacao a versao anterior. */
     public ModelSnapshot withChanges(ChangeSummary summary) {
-        return new ModelSnapshot(format, elements, relationships, types, summary);
+        return new ModelSnapshot(format, elements, relationships, types, tests, summary);
     }
 
     public Map<UUID, ElementSnapshot> elementsById() {
@@ -99,6 +126,10 @@ public record ModelSnapshot(
 
     public Map<UUID, RelationshipSnapshot> relationshipsById() {
         return relationships.stream().collect(Collectors.toMap(RelationshipSnapshot::id, Function.identity()));
+    }
+
+    public Map<UUID, TestSnapshot> testsById() {
+        return tests.stream().collect(Collectors.toMap(TestSnapshot::id, Function.identity()));
     }
 
     public Map<UUID, TypeSnapshot> typesById() {

@@ -1,0 +1,34 @@
+/* botao de ajuda com balao (componente InfoTip) */
+.infotip {
+  position: relative;
+  display: inline-flex;
+}
+
+.infotip-bubble {
+  position: absolute;
+  top: calc(100% + 8px);
+  z-index: 20;
+  width: 280px;
+  padding: 10px 12px;
+  border: 1px solid var(--bd);
+  border-radius: 9px;
+  background: var(--sf);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .12);
+  color: var(--fg);
+  font-size: 13px;
+  line-height: 1.45;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .12s;
+  pointer-events: none;
+}
+
+/* right: o balao se estende para a esquerda, alinhado a borda direita do botao */
+.infotip.right .infotip-bubble { right: 0; }
+.infotip.left .infotip-bubble { left: 0; }
+
+.infotip:hover .infotip-bubble,
+.infotip:focus-within .infotip-bubble {
+  opacity: 1;
+  visibility: visible;
+}

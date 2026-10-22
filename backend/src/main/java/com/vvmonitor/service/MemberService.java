@@ -54,7 +54,7 @@ public class MemberService {
         accessService.requireRole(projectId, userId, MemberRole.OWNER);
         String email = User.normalizeEmail(request.email());
         User user = userRepository.findByEmail(email).orElseThrow(() -> new InvalidFieldException("email",
-                "Este e-mail não tem cadastro no V&V Monitor. Peça para a pessoa criar uma conta e adicione de novo."));
+                "Este e-mail não tem cadastro no ReqTrace Monitor. Peça para a pessoa criar uma conta e adicione de novo."));
         if (memberRepository.findByProjectIdAndUserId(projectId, user.getId()).isPresent()) {
             throw new AlreadyMemberException(email);
         }

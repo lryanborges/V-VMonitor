@@ -103,7 +103,7 @@ export function SubmitVersionDialog({ projectId, changes, elements, onClose, onS
       </div>
 
       <div className="sm-changes">
-        <ModelChangesView elements={changes.elements} relationships={changes.relationships} />
+        <ModelChangesView elements={changes.elements} relationships={changes.relationships} tests={changes.tests} />
       </div>
 
       {/* aviso de qualidade do modelo: nao impede a submissao */}

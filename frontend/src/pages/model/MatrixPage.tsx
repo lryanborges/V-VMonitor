@@ -2,8 +2,9 @@ import { Fragment, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import type { Element, ElementKind, Relationship, RelationshipType } from '../../api/types'
 import { FieldError } from '../../components/FieldError'
+import { InfoTip } from '../../components/InfoTip'
 import { useProject } from '../../layouts/useProject'
-import { KINDS, kindInfo } from '../../utils/labels'
+import { kindInfo } from '../../utils/labels'
 import { relationSentence, sortTypes, typeAbbr, typeMeta } from '../../utils/relationships'
 import { AddRelationshipModal } from './AddRelationshipModal'
 import { CellRelationsDialog } from './CellRelationsDialog'
@@ -43,7 +44,7 @@ type CellAction =
  */
 export function MatrixPage() {
   const project = useProject()
-  const { elementsQuery, elements, relationships, changes } = useModelData(project.id)
+  const { elementsQuery, elements, relationships, tests, changes } = useModelData(project.id)
   const [rowFilter, setRowFilter] = useState<KindFilter>('FUNCTIONAL')
   const [linkFilter, setLinkFilter] = useState<LinkFilter>('all')
   const [hoverCol, setHoverCol] = useState<string | null>(null)
@@ -160,6 +161,11 @@ export function MatrixPage() {
               Pendente de submissão
             </span>
           </div>
+          <InfoTip>
+            {canEdit
+              ? 'Clique num código para ver o elemento ao lado, numa célula vazia para relacionar, ou numa preenchida para trocar o tipo, inverter ou remover.'
+              : 'Clique num código para ver o elemento ao lado, ou passe o mouse sobre uma célula para ver a relação.'}
+          </InfoTip>
         </div>
 
         {elementsQuery.isPending && <p className="hint">Carregando o modelo…</p>}
@@ -267,15 +273,6 @@ export function MatrixPage() {
           </div>
         )}
 
-        {rows.length > 0 && (
-          <p className="hint">
-            Mostrando {rows.length} de {rowFilter === 'all' ? elements.length : elements.filter((e) => e.kind === rowFilter).length}{' '}
-            {rowFilter === 'all' ? 'elementos' : KINDS.find((k) => k.kind === rowFilter)!.plural.toLowerCase()}.{' '}
-            {canEdit
-              ? 'Clique num código para ver o elemento ao lado, numa célula vazia para relacionar, ou numa preenchida para trocar o tipo, inverter ou remover.'
-              : 'Clique num código para ver o elemento ao lado, ou passe o mouse sobre uma célula para ver a relação.'}
-          </p>
-        )}
       </section>
 
         <ElementPanel
@@ -283,6 +280,7 @@ export function MatrixPage() {
           element={selected}
           elements={elements}
           relationships={relationships}
+          tests={tests}
           canEdit={canEdit}
           onSelect={select}
           emptyHint="Clique no código de uma linha ou coluna para ver os detalhes do elemento."

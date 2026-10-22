@@ -189,6 +189,15 @@ class ElementControllerTest {
 
         mockMvc.perform(authenticated(delete(URL + "/" + id)))
                 .andExpect(status().isNoContent());
-        verify(removalService).delete(PROJECT_ID, id, LOGGED_ID);
+        verify(removalService).delete(PROJECT_ID, id, LOGGED_ID, false);
+    }
+
+    @Test
+    void exclusaoPodeLevarJuntoOsTestesQueFicariamSemRequisito() throws Exception {
+        UUID id = UUID.randomUUID();
+
+        mockMvc.perform(authenticated(delete(URL + "/" + id + "?deleteOrphanTests=true")))
+                .andExpect(status().isNoContent());
+        verify(removalService).delete(PROJECT_ID, id, LOGGED_ID, true);
     }
 }

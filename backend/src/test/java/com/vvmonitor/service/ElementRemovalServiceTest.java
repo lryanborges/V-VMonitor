@@ -19,6 +19,7 @@ import com.vvmonitor.infra.repository.ProjectMemberRepository;
 import com.vvmonitor.infra.repository.ProjectRepository;
 import com.vvmonitor.infra.repository.RelationshipRepository;
 import com.vvmonitor.infra.repository.RelationshipTypeRepository;
+import com.vvmonitor.infra.repository.GraphPositionRepository;
 import com.vvmonitor.infra.repository.TestCoverageQueryRepository;
 import com.vvmonitor.infra.repository.TestCoverageQueryRepository.TestSummaryView;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,6 +50,7 @@ class ElementRemovalServiceTest {
     private ElementRepository elementRepository;
     private RelationshipRepository relationshipRepository;
     private TestCoverageQueryRepository coverageRepository;
+    private GraphPositionRepository positionRepository;
     private ElementStatsRepository statsRepository;
     private ProjectRepository projectRepository;
     private ProjectMemberRepository memberRepository;
@@ -68,8 +70,10 @@ class ElementRemovalServiceTest {
         statsRepository = mock(ElementStatsRepository.class);
         projectRepository = mock(ProjectRepository.class);
         memberRepository = mock(ProjectMemberRepository.class);
+        positionRepository = mock(GraphPositionRepository.class);
         service = new ElementRemovalService(elementRepository, relationshipRepository, typeRepository,
-                coverageRepository, statsRepository, projectRepository, new ProjectAccessService(memberRepository));
+                coverageRepository, positionRepository, statsRepository, projectRepository,
+                new ProjectAccessService(memberRepository));
 
         dependencia = type("Dependência");
         refinamento = type("Refinamento");
@@ -191,18 +195,38 @@ class ElementRemovalServiceTest {
     void exclusaoRemoveAssociacoesAntesDoElemento() {
         Element rf7 = element("RF7");
 
-        service.delete(projectId, rf7.getId(), userId);
+        service.delete(projectId, rf7.getId(), userId, false);
 
         InOrder order = inOrder(relationshipRepository, coverageRepository, elementRepository, projectRepository);
         order.verify(relationshipRepository).softDeleteAllOfElement(rf7.getId());
         order.verify(coverageRepository).softDeleteCoverageOf(rf7.getId());
         order.verify(elementRepository).delete(rf7);
         order.verify(projectRepository).touch(projectId);
+        // sem a opcao, os testes que ficariam sem requisito continuam
+        verify(coverageRepository, never()).testsOnlyCovering(any());
+    }
+
+    @Test
+    void exclusaoComOpcaoRemoveOsTestesQueFicariamSemRequisito() {
+        Element rf7 = element("RF7");
+        UUID t3 = UUID.randomUUID();
+        when(coverageRepository.testsOnlyCovering(rf7.getId()))
+                .thenReturn(List.of(new TestCoverageQueryRepository.TestSummaryView(t3, "T3", "Login")));
+
+        service.delete(projectId, rf7.getId(), userId, true);
+
+        // os testes sao identificados antes de remover os vinculos (depois eles ja nao apontam para o elemento)
+        InOrder order = inOrder(coverageRepository);
+        order.verify(coverageRepository).testsOnlyCovering(rf7.getId());
+        order.verify(coverageRepository).softDeleteCoverageOf(rf7.getId());
+        order.verify(coverageRepository).softDeleteTests(List.of(t3));
+        // RF21: as posicoes no grafo do teste e do elemento saem junto
+        verify(positionRepository).deleteNodes(List.of(t3, rf7.getId()));
     }
 
     @Test
     void elementoInexistenteNaoEhExcluido() {
-        assertThatThrownBy(() -> service.delete(projectId, UUID.randomUUID(), userId))
+        assertThatThrownBy(() -> service.delete(projectId, UUID.randomUUID(), userId, false))
                 .isInstanceOf(ElementNotFoundException.class);
         verify(elementRepository, never()).delete(any());
     }
@@ -213,7 +237,7 @@ class ElementRemovalServiceTest {
                 .thenReturn(Optional.of(new ProjectMember(projectId, userId, MemberRole.VIEWER)));
         Element rf7 = element("RF7");
 
-        assertThatThrownBy(() -> service.delete(projectId, rf7.getId(), userId))
+        assertThatThrownBy(() -> service.delete(projectId, rf7.getId(), userId, false))
                 .isInstanceOf(ProjectAccessDeniedException.class);
         assertThatThrownBy(() -> service.impact(projectId, rf7.getId(), userId))
                 .isInstanceOf(ProjectAccessDeniedException.class);

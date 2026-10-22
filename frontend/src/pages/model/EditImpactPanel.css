@@ -1,0 +1,54 @@
+/* analise de impacto na edicao (EditImpactPanel) */
+.eip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border: 1px solid var(--bd);
+  border-radius: 9px;
+  background: var(--bg);
+}
+
+.eip-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+}
+
+.eip-head .ico {
+  color: var(--wr);
+}
+
+.eip-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.eip-group .eyebrow {
+  font-size: 11px;
+}
+
+.eip-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 13px;
+}
+
+.eip-desc {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.eip-via,
+.eip-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  white-space: nowrap;
+}

@@ -90,7 +90,7 @@ export function RegisterPage() {
       <form className="auth-form" style={{ maxWidth: 420, gap: 18 }} onSubmit={handleSubmit} noValidate>
         <div className="auth-form-head">
           <h2>Criar conta</h2>
-          <p>Informe seus dados para acessar o V&amp;V Monitor.</p>
+          <p>Informe seus dados para acessar o ReqTrace Monitor.</p>
         </div>
 
         <div>

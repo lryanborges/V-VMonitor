@@ -28,6 +28,7 @@ public class ProjectVersionRepository {
             v.id, v.version_number, v.label, v.created_by, u.name AS created_by_name, v.created_at,
             jsonb_array_length(v.snapshot -> 'elements') AS elements,
             jsonb_array_length(v.snapshot -> 'relationships') AS relationships,
+            COALESCE(jsonb_array_length(v.snapshot -> 'tests'), 0) AS tests,
             v.snapshot -> 'changes' AS changes
             """;
 
@@ -41,7 +42,7 @@ public class ProjectVersionRepository {
 
     /** Dados de uma versao sem o conteudo completo. createdByName e null se o autor nao existir mais. */
     public record VersionRow(UUID id, int number, String label, UUID createdBy, String createdByName,
-                             Instant createdAt, int elements, int relationships, ChangeSummary changes) {
+                             Instant createdAt, int elements, int relationships, int tests, ChangeSummary changes) {
     }
 
     /**
@@ -117,6 +118,7 @@ public class ProjectVersionRepository {
                 rs.getTimestamp("created_at").toInstant(),
                 rs.getInt("elements"),
                 rs.getInt("relationships"),
+                rs.getInt("tests"),
                 changes == null ? null : json.readValue(changes, ChangeSummary.class));
     }
 }

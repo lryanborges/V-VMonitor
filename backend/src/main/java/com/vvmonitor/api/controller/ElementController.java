@@ -87,12 +87,16 @@ public class ElementController {
         return removalService.impact(projectId, elementId, user.id());
     }
 
-    /** RF15: exclui o elemento e suas associacoes. */
+    /**
+     * RF15: exclui o elemento e suas associacoes. deleteOrphanTests: exclui tambem os testes que ficariam sem
+     * nenhum requisito (por padrao eles continuam, como testes sem requisito).
+     */
     @DeleteMapping("/{elementId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal AuthenticatedUser user,
                        @PathVariable UUID projectId,
-                       @PathVariable UUID elementId) {
-        removalService.delete(projectId, elementId, user.id());
+                       @PathVariable UUID elementId,
+                       @RequestParam(defaultValue = "false") boolean deleteOrphanTests) {
+        removalService.delete(projectId, elementId, user.id(), deleteOrphanTests);
     }
 }

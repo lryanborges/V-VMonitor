@@ -28,8 +28,9 @@ export const elementsApi = {
   deleteImpact: (projectId: string, elementId: string) =>
     api<DeleteImpact>(`${base(projectId)}/${elementId}/delete-impact`),
 
-  remove: (projectId: string, elementId: string) =>
-    api<void>(`${base(projectId)}/${elementId}`, { method: 'DELETE' }),
+  /** deleteOrphanTests: exclui tambem os testes que ficariam sem nenhum requisito (RF15, RF9). */
+  remove: (projectId: string, elementId: string, deleteOrphanTests = false) =>
+    api<void>(`${base(projectId)}/${elementId}${deleteOrphanTests ? '?deleteOrphanTests=true' : ''}`, { method: 'DELETE' }),
 
   nextCode: (projectId: string, kind: ElementKind) =>
     api<NextCodeResponse>(`${base(projectId)}/next-code?kind=${kind}`),

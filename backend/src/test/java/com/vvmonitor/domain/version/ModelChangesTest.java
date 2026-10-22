@@ -4,6 +4,7 @@ import com.vvmonitor.domain.enums.ElementKind;
 import com.vvmonitor.domain.enums.Priority;
 import com.vvmonitor.domain.version.ModelSnapshot.ElementSnapshot;
 import com.vvmonitor.domain.version.ModelSnapshot.RelationshipSnapshot;
+import com.vvmonitor.domain.version.ModelSnapshot.TestSnapshot;
 import com.vvmonitor.domain.version.ModelSnapshot.TypeSnapshot;
 import org.junit.jupiter.api.Test;
 
@@ -25,10 +26,15 @@ class ModelChangesTest {
         return new ElementSnapshot(UUID.randomUUID(), code, ElementKind.FUNCTIONAL, description, priority);
     }
 
+    private ModelSnapshot snapshot(List<ElementSnapshot> elements, List<RelationshipSnapshot> relationships,
+                                   List<TestSnapshot> tests) {
+        return new ModelSnapshot(ModelSnapshot.FORMAT, elements, relationships, List.of(), tests, null);
+    }
+
     private ModelSnapshot snapshot(List<ElementSnapshot> elements, List<RelationshipSnapshot> relationships) {
         return new ModelSnapshot(ModelSnapshot.FORMAT, elements, relationships, List.of(
                 new TypeSnapshot(dependencia, "Dependência", false, false),
-                new TypeSnapshot(refinamento, "Refinamento", false, false)), null);
+                new TypeSnapshot(refinamento, "Refinamento", false, false)), List.of(), null);
     }
 
     @Test
@@ -99,5 +105,34 @@ class ModelChangesTest {
                 .singleElement().satisfies(m -> assertThat(m.after().typeId()).isEqualTo(refinamento));
         assertThat(ModelChanges.between(base, snapshot(List.of(rf1, rf2), List.of(inverteu))).modifiedRelationships())
                 .singleElement().satisfies(m -> assertThat(m.after().sourceId()).isEqualTo(rf1.id()));
+    }
+
+    @Test
+    void testesAdicionadosAlteradosERemovidos() {
+        UUID t1 = UUID.randomUUID();
+        UUID t2 = UUID.randomUUID();
+        UUID t3 = UUID.randomUUID();
+        ModelSnapshot base = snapshot(List.of(rf1, rf2), List.of(), List.of(
+                new TestSnapshot(t1, "T1", "Cadastro", List.of(rf1.id())),
+                new TestSnapshot(t2, "T2", "Login", List.of(rf2.id()))));
+        // T1 passou a cobrir tambem o RF2; T2 foi excluido; T3 e novo
+        ModelSnapshot current = snapshot(List.of(rf1, rf2), List.of(), List.of(
+                new TestSnapshot(t1, "T1", "Cadastro", List.of(rf1.id(), rf2.id())),
+                new TestSnapshot(t3, "T3", "Senha", List.of(rf2.id()))));
+
+        ModelChanges changes = ModelChanges.between(base, current);
+
+        assertThat(changes.addedTests()).extracting(TestSnapshot::code).containsExactly("T3");
+        assertThat(changes.modifiedTests()).singleElement().satisfies(m -> assertThat(m.after().elementIds()).hasSize(2));
+        assertThat(changes.removedTests()).extracting(TestSnapshot::code).containsExactly("T2");
+        assertThat(changes.summary()).isEqualTo(new ChangeSummary(1, 1, 1));
+        assertThat(changes.pendingIds()).containsExactlyInAnyOrder(t1, t3);
+    }
+
+    @Test
+    void versaoAntigaSemTestesEVazia() {
+        ModelSnapshot formato1 = new ModelSnapshot(1, List.of(rf1), List.of(), List.of(), null, null);
+
+        assertThat(formato1.tests()).isEmpty();
     }
 }
