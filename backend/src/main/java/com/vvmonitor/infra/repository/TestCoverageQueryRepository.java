@@ -3,13 +3,14 @@ package com.vvmonitor.infra.repository;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
  * Consultas e alteracoes sobre testes e seus vinculos usadas na exclusao de elementos (RF15, RF16).
- * SQL nativo porque tests e test_coverage ainda nao tem entidades JPA (chegam na etapa de testes, RF9).
+ * SQL nativo, anterior as entidades TestCase e TestCoverage (RF9); continua servindo a exclusao.
  */
 @Repository
 public class TestCoverageQueryRepository {
@@ -46,6 +47,15 @@ public class TestCoverageQueryRepository {
     /** RF15: remove (soft delete) os vinculos teste-requisito de um elemento que esta sendo excluido. */
     public int softDeleteCoverageOf(UUID elementId) {
         return jdbc.update(SOFT_DELETE_OF_ELEMENT, Map.of("elementId", elementId));
+    }
+
+    /** RF15: remove (soft delete) testes que ficaram sem requisito, quando o ator pede na exclusao. */
+    public int softDeleteTests(Collection<UUID> testIds) {
+        if (testIds.isEmpty()) {
+            return 0;
+        }
+        return jdbc.update("UPDATE tests SET deleted_at = now() WHERE deleted_at IS NULL AND id IN (:ids)",
+                Map.of("ids", testIds));
     }
 
     public record TestSummaryView(UUID id, String code, String description) {

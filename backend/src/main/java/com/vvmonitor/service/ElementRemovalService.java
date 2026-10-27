@@ -13,13 +13,16 @@ import com.vvmonitor.domain.exception.ElementNotFoundException;
 import com.vvmonitor.infra.repository.ElementRepository;
 import com.vvmonitor.infra.repository.ElementStatsRepository;
 import com.vvmonitor.infra.repository.ElementStatsRepository.ElementStats;
+import com.vvmonitor.infra.repository.GraphPositionRepository;
 import com.vvmonitor.infra.repository.ProjectRepository;
 import com.vvmonitor.infra.repository.RelationshipRepository;
 import com.vvmonitor.infra.repository.RelationshipTypeRepository;
 import com.vvmonitor.infra.repository.TestCoverageQueryRepository;
+import com.vvmonitor.infra.repository.TestCoverageQueryRepository.TestSummaryView;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -40,6 +43,7 @@ public class ElementRemovalService {
     private final RelationshipRepository relationshipRepository;
     private final RelationshipTypeRepository typeRepository;
     private final TestCoverageQueryRepository coverageRepository;
+    private final GraphPositionRepository positionRepository;
     private final ElementStatsRepository statsRepository;
     private final ProjectRepository projectRepository;
     private final ProjectAccessService accessService;
@@ -47,12 +51,14 @@ public class ElementRemovalService {
     public ElementRemovalService(ElementRepository elementRepository, RelationshipRepository relationshipRepository,
                                  RelationshipTypeRepository typeRepository,
                                  TestCoverageQueryRepository coverageRepository,
+                                 GraphPositionRepository positionRepository,
                                  ElementStatsRepository statsRepository, ProjectRepository projectRepository,
                                  ProjectAccessService accessService) {
         this.elementRepository = elementRepository;
         this.relationshipRepository = relationshipRepository;
         this.typeRepository = typeRepository;
         this.coverageRepository = coverageRepository;
+        this.positionRepository = positionRepository;
         this.statsRepository = statsRepository;
         this.projectRepository = projectRepository;
         this.accessService = accessService;
@@ -122,11 +128,20 @@ public class ElementRemovalService {
      * e na mesma transacao. O codigo do elemento nunca e reutilizado.
      */
     @Transactional
-    public void delete(UUID projectId, UUID elementId, UUID userId) {
+    public void delete(UUID projectId, UUID elementId, UUID userId, boolean deleteOrphanTests) {
         accessService.requireRole(projectId, userId, MemberRole.EDITOR);
         Element element = find(projectId, elementId);
         relationshipRepository.softDeleteAllOfElement(elementId);
+        // calculado antes de remover os vinculos: depois o teste ja nao aponta para o elemento
+        List<UUID> orphanTests = deleteOrphanTests
+                ? coverageRepository.testsOnlyCovering(elementId).stream().map(TestSummaryView::id).toList()
+                : List.of();
         coverageRepository.softDeleteCoverageOf(elementId);
+        coverageRepository.softDeleteTests(orphanTests);
+        // RF21: a posicao no grafo do elemento (e dos testes excluidos junto) sai com ele
+        List<UUID> removedNodes = new ArrayList<>(orphanTests);
+        removedNodes.add(elementId);
+        positionRepository.deleteNodes(removedNodes);
         elementRepository.delete(element);
         projectRepository.touch(projectId);
     }

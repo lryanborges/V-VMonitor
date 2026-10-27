@@ -1,6 +1,7 @@
 package com.vvmonitor.api.dto.response;
 
 import com.vvmonitor.api.dto.response.VersionResponse.VersionedRelationship;
+import com.vvmonitor.api.dto.response.VersionResponse.VersionedTest;
 import com.vvmonitor.domain.version.ChangeSummary;
 import com.vvmonitor.domain.version.ModelChanges;
 import com.vvmonitor.domain.version.ModelChanges.Modified;
@@ -20,7 +21,8 @@ public record ModelChangesResponse(
         Integer targetVersion,
         ChangeSummary summary,
         Group<ElementSnapshot> elements,
-        Group<VersionedRelationship> relationships
+        Group<VersionedRelationship> relationships,
+        Group<VersionedTest> tests
 ) {
 
     public record Group<T>(List<T> added, List<Modified<T>> modified, List<T> removed) {
@@ -40,6 +42,12 @@ public record ModelChangesResponse(
                         changes.modifiedRelationships().stream()
                                 .map(m -> new Modified<>(before.relationship(m.before()), now.relationship(m.after())))
                                 .toList(),
-                        changes.removedRelationships().stream().map(before::relationship).toList()));
+                        changes.removedRelationships().stream().map(before::relationship).toList()),
+                new Group<>(
+                        changes.addedTests().stream().map(now::test).toList(),
+                        changes.modifiedTests().stream()
+                                .map(m -> new Modified<>(before.test(m.before()), now.test(m.after())))
+                                .toList(),
+                        changes.removedTests().stream().map(before::test).toList()));
     }
 }

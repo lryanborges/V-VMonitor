@@ -1,14 +1,13 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState, type ReactNode } from 'react'
+import { useState } from 'react'
 import { Link, NavLink, Outlet, useParams } from 'react-router'
 import { ApiError } from '../api/client'
 import { projectKeys, projectsApi } from '../api/projects'
 import { AppHeader } from '../components/AppHeader'
 import { FieldError } from '../components/FieldError'
-import { BackIcon, GraphIcon, HistoryIcon, MembersIcon, PlugIcon } from '../components/icons'
+import { BackIcon, GraphIcon, HistoryIcon, MembersIcon } from '../components/icons'
 import { ShareProjectDialog } from '../pages/members/ShareProjectDialog'
 import { ROLE_LABEL } from '../utils/labels'
-import { ShareContext } from './shareContext'
 import './ProjectLayout.css'
 
 /** Moldura das telas de um projeto: cabecalho padrao, menu lateral do projeto e conteudo. */
@@ -18,7 +17,7 @@ export function ProjectLayout() {
   const notFound = project.error instanceof ApiError && (project.error.status === 404 || project.error.status === 400)
 
   const data = project.data
-  // RF20: janela de compartilhamento, aberta pelo menu (Membros) ou pelo cabecalho das telas (Compartilhar)
+  // RF20: janela de compartilhamento, aberta pelo item Membros do menu lateral
   const [sharing, setSharing] = useState(false)
   const elements = data ? data.stats.requirements + data.stats.businessRules : null
 
@@ -55,7 +54,6 @@ export function ProjectLayout() {
               Membros
               {data && <span className="n">{data.members.length}</span>}
             </button>
-            <SoonNav icon={<PlugIcon />} label="Integrações" />
           </nav>
         </aside>
 
@@ -71,11 +69,7 @@ export function ProjectLayout() {
           {project.isError && !notFound && (
             <div className="pl-msg"><FieldError>{project.error.message}</FieldError></div>
           )}
-          {data && (
-            <ShareContext.Provider value={() => setSharing(true)}>
-              <Outlet context={data} />
-            </ShareContext.Provider>
-          )}
+          {data && <Outlet context={data} />}
         </div>
       </div>
 
@@ -84,13 +78,3 @@ export function ProjectLayout() {
   )
 }
 
-/** Secao ainda nao implementada: aparece no menu, desabilitada. */
-function SoonNav({ icon, label, count }: { icon: ReactNode; label: string; count?: string }) {
-  return (
-    <span className="nav disabled" aria-disabled="true" title="Em breve">
-      {icon}
-      {label}
-      {count && <span className="n">{count}</span>}
-    </span>
-  )
-}

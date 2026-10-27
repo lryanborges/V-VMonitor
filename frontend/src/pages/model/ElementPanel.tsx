@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import type { Element, Relationship } from '../../api/types'
+import type { Element, Relationship, TestCase, VersionedTest } from '../../api/types'
 import { EditIcon, PlusIcon, TrashIcon } from '../../components/icons'
 import { KIND_TITLE, kindInfo, priorityInfo } from '../../utils/labels'
 import { groupRelationsOf } from '../../utils/relationships'
@@ -9,6 +9,9 @@ import { EditRelationshipModal } from './EditRelationshipModal'
 import { ElementActions } from './ElementActions'
 import { ElementFormDrawer } from './ElementFormDrawer'
 import { RemoveRelationshipDialog } from './RemoveRelationshipDialog'
+import { DeleteTestDialog } from './tests/DeleteTestDialog'
+import { TestDialog } from './tests/TestDialog'
+import { TestItem } from './tests/TestItem'
 import './ElementPanel.css'
 
 interface ElementPanelProps {
@@ -17,14 +20,16 @@ interface ElementPanelProps {
   element: Element | null
   elements: Element[]
   relationships: Relationship[]
+  /** Testes do projeto (RF9); numa versao, os testes guardados nela. */
+  tests: VersionedTest[]
   canEdit: boolean
   /** Seleciona outro elemento (ao clicar num vinculo) ou limpa a selecao (null, apos excluir). */
   onSelect: (elementId: string | null) => void
   /** Texto do estado vazio, conforme a visualizacao. */
   emptyHint: string
   /**
-   * Elemento de uma versao (RF18): so leitura, sem a situacao (rascunho/submetido) e sem testes, que nao fazem
-   * parte da copia guardada.
+   * Elemento de uma versao (RF18): so leitura e sem a situacao (rascunho/submetido). Os testes sao os da versao
+   * (versoes anteriores aos testes, RF9, nao tem nenhum).
    */
   fromVersion?: boolean
 }
@@ -35,6 +40,9 @@ type PanelAction =
   | { mode: 'addRelationship' }
   | { mode: 'editRelationship'; relationship: Relationship }
   | { mode: 'removeRelationship'; relationship: Relationship }
+  | { mode: 'addTest' }
+  | { mode: 'editTest'; test: TestCase }
+  | { mode: 'deleteTest'; test: TestCase }
 
 /**
  * Painel lateral do elemento selecionado, comum a lista, ao grafo e a matriz: detalhes, numeros de
@@ -46,6 +54,7 @@ export function ElementPanel({
   element,
   elements,
   relationships,
+  tests,
   canEdit,
   onSelect,
   emptyHint,
@@ -69,6 +78,9 @@ export function ElementPanel({
   const dependsOn = own.filter((r) => isDependency(r) && r.source.id === element.id).length
   const dependents = own.filter((r) => isDependency(r) && r.target.id === element.id).length
   const groups = groupRelationsOf(element.id, relationships)
+  // RF13: testes que cobrem este requisito
+  const ownTests = tests.filter((t) => t.covers.some((e) => e.id === element.id))
+  const editable = canEdit && !fromVersion
 
   return (
     <>
@@ -95,15 +107,13 @@ export function ElementPanel({
             onDelete={() => setAction({ mode: 'deleteElement' })}
           />
         )}
-        <div className={`ep-stats${fromVersion ? ' two' : ''}`}>
+        <div className="ep-stats">
           <div><b className="mono">{dependsOn}</b><span className="hint">Depende de</span></div>
           <div><b className="mono">{dependents}</b><span className="hint">Dependentes</span></div>
-          {!fromVersion && (
-            <div>
-              <b className={`mono${element.tests > 0 ? ' ok' : ''}`}>{isRule ? '—' : element.tests}</b>
-              <span className="hint">{element.tests === 1 ? 'Teste' : 'Testes'}</span>
-            </div>
-          )}
+          <div>
+            <b className={`mono${ownTests.length > 0 ? ' ok' : ''}`}>{isRule ? '—' : ownTests.length}</b>
+            <span className="hint">{ownTests.length === 1 ? 'Teste' : 'Testes'}</span>
+          </div>
         </div>
       </div>
 
@@ -153,24 +163,48 @@ export function ElementPanel({
           </div>
         ))}
 
-        {!isRule && !fromVersion && (
+        {!isRule && (
           <>
             <div className="ep-section-head ep-section-sep">
-              <span>Testes <span className="mono hint">{element.tests}</span></span>
-              {canEdit && (
-                <button className="btn sm" type="button" disabled title="Em breve"><PlusIcon />Associar teste</button>
+              <span>Testes <span className="mono hint">{ownTests.length}</span></span>
+              {editable && (
+                <button className="btn sm" type="button" onClick={() => setAction({ mode: 'addTest' })}>
+                  <PlusIcon />Associar teste
+                </button>
               )}
             </div>
-            <p className="hint">
-              {element.tests === 0 ? 'Nenhum teste associado ainda.' : 'A lista de testes chega em uma próxima etapa.'}
-            </p>
+            {/* RF13: indicacao em texto de requisito sem teste */}
+            {ownTests.length === 0 && (
+              <p className={fromVersion ? 'hint' : 'hint ep-untested'}>
+                {fromVersion ? 'Nenhum teste nesta versão.' : 'Nenhum teste associado: este requisito não está coberto.'}
+              </p>
+            )}
+            {ownTests.map((t) =>
+              editable ? (
+                <TestItem
+                  key={t.id}
+                  test={t}
+                  onEdit={() => setAction({ mode: 'editTest', test: t as TestCase })}
+                  onDelete={() => setAction({ mode: 'deleteTest', test: t as TestCase })}
+                />
+              ) : (
+                <TestItem key={t.id} test={t} />
+              ),
+            )}
           </>
         )}
       </div>
     </aside>
 
       {action?.mode === 'editElement' && (
-        <ElementFormDrawer projectId={projectId} element={element} onClose={close} onSaved={close} />
+        <ElementFormDrawer
+          projectId={projectId}
+          element={element}
+          relationships={relationships}
+          tests={tests}
+          onClose={close}
+          onSaved={close}
+        />
       )}
 
       {action?.mode === 'deleteElement' && (
@@ -207,6 +241,19 @@ export function ElementPanel({
           onSaved={close}
         />
       )}
+
+      {(action?.mode === 'addTest' || action?.mode === 'editTest') && (
+        <TestDialog
+          projectId={projectId}
+          elements={elements}
+          tests={tests as TestCase[]}
+          test={action.mode === 'editTest' ? action.test : undefined}
+          forElement={action.mode === 'addTest' ? element : undefined}
+          onClose={close}
+        />
+      )}
+
+      {action?.mode === 'deleteTest' && <DeleteTestDialog projectId={projectId} test={action.test} onClose={close} />}
 
       {action?.mode === 'removeRelationship' && (
         <RemoveRelationshipDialog

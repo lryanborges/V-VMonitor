@@ -177,6 +177,14 @@ export interface VersionedRelationship {
   target: ElementSummary
 }
 
+/** Teste com os requisitos que cobre (ou cobria, numa versao). */
+export interface VersionedTest {
+  id: string
+  code: string
+  description: string
+  covers: ElementSummary[]
+}
+
 export interface ChangeGroup<T> {
   added: T[]
   modified: { before: T; after: T }[]
@@ -193,6 +201,7 @@ export interface ModelChanges {
   summary: ChangeSummary
   elements: ChangeGroup<ElementSnapshot>
   relationships: ChangeGroup<VersionedRelationship>
+  tests: ChangeGroup<VersionedTest>
 }
 
 /** VersionSummaryResponse.java: versao na lista (RF18). */
@@ -204,6 +213,8 @@ export interface VersionSummary {
   createdAt: string
   elements: number
   relationships: number
+  /** 0 em versoes anteriores aos testes (RF9) */
+  tests: number
   /** mudancas em relacao a versao anterior */
   changes: ChangeSummary | null
 }
@@ -213,6 +224,7 @@ export interface Version {
   version: VersionSummary
   elements: ElementSnapshot[]
   relationships: VersionedRelationship[]
+  tests: VersionedTest[]
 }
 
 export interface CreateVersionRequest {
@@ -226,4 +238,17 @@ export interface Member {
   email: string
   role: MemberRole
   addedAt: string
+}
+
+/** TestResponse.java: teste com os requisitos que cobre (RF9). covers vazio = ficou sem requisito. */
+export interface TestCase extends VersionedTest {
+  submissionStatus: SubmissionStatus
+  createdAt: string
+  updatedAt: string
+}
+
+/** RF9: descricao e requisitos (RF/RNF) cobertos; usado ao criar e ao editar. */
+export interface TestRequest {
+  description: string
+  elementIds: string[]
 }

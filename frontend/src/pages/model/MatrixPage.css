@@ -52,15 +52,26 @@
   text-align: center;
 }
 
-/* area rolavel: cabecalhos e primeira coluna ficam fixos */
+/*
+ * area rolavel do tamanho da tela, como a lista e o grafo; cabecalhos e primeira coluna ficam fixos.
+ * Matriz menor que a area fica no canto, com a grade fechada (.mx-table); maior, rola nos dois sentidos.
+ */
 .mx-scroll {
   flex: 1;
   min-height: 0;
   overflow: auto;
 }
 
+/* borda externa igual as divisorias entre os grupos de colunas (.gs) */
+.vv .mx-scroll.card {
+  border: 2px solid var(--bd2);
+}
+
 .mx-table {
-  min-width: max-content;
+  width: max-content;
+  /* fecha a grade a direita e embaixo quando ela nao ocupa o card todo */
+  border-right: 1px solid var(--bd);
+  border-bottom: 1px solid var(--bd);
 }
 
 .mgrid {

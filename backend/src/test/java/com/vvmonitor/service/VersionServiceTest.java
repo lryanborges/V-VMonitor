@@ -23,6 +23,8 @@ import com.vvmonitor.infra.repository.ProjectVersionRepository.Latest;
 import com.vvmonitor.infra.repository.ProjectVersionRepository.VersionRow;
 import com.vvmonitor.infra.repository.RelationshipRepository;
 import com.vvmonitor.infra.repository.RelationshipTypeRepository;
+import com.vvmonitor.infra.repository.TestCaseRepository;
+import com.vvmonitor.infra.repository.TestCoverageRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
@@ -73,7 +75,8 @@ class VersionServiceTest {
         versionRepository = mock(ProjectVersionRepository.class);
         projectRepository = mock(ProjectRepository.class);
         memberRepository = mock(ProjectMemberRepository.class);
-        service = new VersionService(elementRepository, relationshipRepository, typeRepository, versionRepository,
+        service = new VersionService(elementRepository, relationshipRepository, typeRepository,
+                mock(TestCaseRepository.class), mock(TestCoverageRepository.class), versionRepository,
                 projectRepository, new ProjectAccessService(memberRepository), Clock.fixed(NOW, ZoneOffset.UTC));
 
         rf1 = element("RF1", "Cadastro");
@@ -87,7 +90,7 @@ class VersionServiceTest {
         when(relationshipRepository.findAllByProjectIdOrderByCreatedAt(projectId)).thenReturn(List.of());
         when(versionRepository.findLatest(projectId)).thenReturn(Optional.empty());
         when(versionRepository.find(eq(projectId), anyInt())).thenAnswer(inv -> Optional.of(new VersionRow(
-                UUID.randomUUID(), inv.getArgument(1), null, userId, "Ana", NOW, 2, 0, new ChangeSummary(2, 0, 0))));
+                UUID.randomUUID(), inv.getArgument(1), null, userId, "Ana", NOW, 2, 0, 0, new ChangeSummary(2, 0, 0))));
         loggedAs(MemberRole.EDITOR);
     }
 

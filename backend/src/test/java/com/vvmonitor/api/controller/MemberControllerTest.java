@@ -100,7 +100,7 @@ class MemberControllerTest {
     @Test
     void semCadastroRetorna400NoCampoEJaMembro409() throws Exception {
         when(memberService.add(eq(PROJECT_ID), eq(LOGGED_ID), eq(new AddMemberRequest("ninguem@exemplo.com"))))
-                .thenThrow(new InvalidFieldException("email", "Este e-mail não tem cadastro no V&V Monitor."));
+                .thenThrow(new InvalidFieldException("email", "Este e-mail não tem cadastro no ReqTrace Monitor."));
         mockMvc.perform(authenticated(post(BASE)).contentType(MediaType.APPLICATION_JSON)
                         .content("{\"email\":\"ninguem@exemplo.com\"}"))
                 .andExpect(status().isBadRequest())

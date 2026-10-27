@@ -11,6 +11,7 @@ import com.vvmonitor.domain.exception.VersionNotFoundException;
 import com.vvmonitor.domain.version.ChangeSummary;
 import com.vvmonitor.infra.repository.UserRepository;
 import com.vvmonitor.infra.security.JwtService;
+import com.vvmonitor.service.RestoreService;
 import com.vvmonitor.service.VersionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,6 +55,9 @@ class VersionControllerTest {
     private VersionService versionService;
 
     @MockitoBean
+    private RestoreService restoreService;
+
+    @MockitoBean
     private UserRepository userRepository;
 
     @BeforeEach
@@ -67,7 +71,7 @@ class VersionControllerTest {
 
     private static VersionSummaryResponse version(int number, String label) {
         return new VersionSummaryResponse(UUID.randomUUID(), number, label,
-                new ProjectResponse.PersonSummary(LOGGED_ID, "Logado"), Instant.now(), 12, 8,
+                new ProjectResponse.PersonSummary(LOGGED_ID, "Logado"), Instant.now(), 12, 8, 3,
                 new ChangeSummary(3, 1, 2));
     }
 
@@ -109,6 +113,12 @@ class VersionControllerTest {
         mockMvc.perform(authenticated(post("/api/projects/" + other + "/versions"))
                         .contentType(MediaType.APPLICATION_JSON).content("{}"))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void restauraVersao() throws Exception {
+        mockMvc.perform(authenticated(post(BASE + "/versions/2/restore"))).andExpect(status().isNoContent());
+        verify(restoreService).restore(PROJECT_ID, 2, LOGGED_ID);
     }
 
     @Test

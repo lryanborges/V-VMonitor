@@ -1,6 +1,6 @@
-# Schema do banco de dados, V&V Monitor
+# Schema do banco de dados, ReqTrace Monitor
 
-Banco: PostgreSQL 16. Migrações versionadas com Flyway: `V1__schema_inicial` (tabelas), `V2__ultima_submissao` (ultima submissao em `projects`) e `V3__versoes_do_modelo` (submeter passa a gerar versao; remove `submission_status` e as colunas da V2).
+Banco: PostgreSQL 16. Migrações versionadas com Flyway: `V1__schema_inicial` (tabelas), `V2__ultima_submissao` (ultima submissao em `projects`) `V3__versoes_do_modelo` (submeter passa a gerar versao; remove `submission_status` e as colunas da V2) e `V4__posicoes_do_grafo` (posicao dos nos no grafo).
 
 ## Convenções
 
@@ -11,7 +11,7 @@ Banco: PostgreSQL 16. Migrações versionadas com Flyway: `V1__schema_inicial` (
   - Restrições de unicidade são **índices únicos parciais** (`WHERE deleted_at IS NULL`), para que registros removidos não bloqueiem novos.
   - No Hibernate: `@SQLDelete` (converte DELETE em UPDATE de `deleted_at`) e `@SQLRestriction("deleted_at IS NULL")` em cada entidade.
   - Remoção em cascata feita pela aplicação, na mesma transação (RF15: remover requisito "e suas associações"; remover projeto remove seu conteúdo).
-- Exceções ao soft delete: `project_versions` (imutável, RNF2) e `code_sequences` (contador interno).
+- Exceções ao soft delete: `project_versions` (imutável, RNF2), `code_sequences` (contador interno) e `graph_positions` (apresentação; a linha é apagada quando o nó deixa de existir).
 
 ## Enums
 
@@ -129,6 +129,8 @@ Para tipos simétricos, a aplicação grava o par em ordem fixa (menor UUID como
 
 ### tests (RF9)
 
+Entidades JPA `TestCase` e `TestCoverage`. A coluna `status` existe, mas a aplicacao ainda nao a usa (todo teste fica `NOT_RUN`).
+
 | Coluna | Tipo | Restrições |
 |---|---|---|
 | id | uuid | PK |
@@ -172,9 +174,20 @@ Imutável: sem `deleted_at`; trigger bloqueia UPDATE e DELETE.
 
 Submeter o modelo (RF10 + RF17) grava a próxima versão. O que está pendente ("rascunho") não é gravado: é calculado comparando o modelo atual com o `snapshot` da última versão (adicionado, alterado ou removido). A "última submissão" do projeto é a última versão (`created_at`, `created_by`).
 
+### graph_positions (RF21, proposto para a v2 do documento)
+
+| Coluna | Tipo | Restrições |
+|---|---|---|
+| project_id | uuid | PK (com node_id), FK → projects |
+| node_id | uuid | PK; id de um elemento ou de um teste do projeto (sem FK) |
+| x, y | double precision | NOT NULL; canto superior esquerdo do nó no grafo |
+| updated_by | uuid | NOT NULL, FK → users |
+| updated_at | timestamptz | NOT NULL |
+
+Compartilhada entre os membros; só proprietário e editores gravam (ao soltar um nó arrastado). Não entra nas versões nem nas pendências.
+
 ## Fora do escopo inicial (migrações futuras)
 
-- `integrations` e `external_links` (RF19).
 - `project_invitations` (convite por e-mail não cadastrado, RF20).
 - `change_log` (histórico granular de alterações).
 

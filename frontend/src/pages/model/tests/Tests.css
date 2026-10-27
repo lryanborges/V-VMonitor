@@ -1,0 +1,179 @@
+/* testes (RF9): seletor de requisitos, janela de teste, tabela e itens do painel */
+
+/* seletor de requisitos */
+.rp {
+  border: 1px solid var(--bd);
+  border-radius: 9px;
+  overflow: hidden;
+}
+
+.rp.err {
+  border-color: var(--wr);
+}
+
+.rp-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-bottom: 1px solid var(--bd);
+  background: var(--bg);
+}
+
+.rp-search .ico {
+  position: absolute;
+  left: 19px;
+  color: var(--mt);
+}
+
+.rp-search .inp {
+  flex: 1;
+}
+
+.rp-count {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.rp-list {
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  max-height: 220px;
+  overflow: auto;
+}
+
+.rp-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 7px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.rp-item:hover {
+  background: var(--sf2);
+}
+
+.rp-item input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--ac);
+}
+
+.rp-desc {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rp-empty {
+  padding: 10px;
+}
+
+/* janela de teste */
+.td-modes {
+  align-self: flex-start;
+}
+
+.td-existing {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow: auto;
+}
+
+.td-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--bd);
+  border-radius: 9px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.td-option.on {
+  border-color: var(--ac);
+  background: var(--acsoft);
+}
+
+.td-option input {
+  margin-top: 3px;
+  accent-color: var(--ac);
+}
+
+.td-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* item de teste no painel do elemento */
+.tt-row {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--bd);
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+.tt-row:hover {
+  background: var(--sf2);
+}
+
+.tt-row .desc-full {
+  flex: 1;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.tt-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity .12s;
+}
+
+.tt-row:hover .tt-actions,
+.tt-row:focus-within .tt-actions {
+  opacity: 1;
+}
+
+.tt-actions .btn.ic.sm {
+  width: 26px;
+  height: 26px;
+}
+
+/* tabela de testes (aba Testes da lista) */
+.tt-table .row {
+  grid-template-columns: 64px minmax(0, 1fr) minmax(160px, 260px) 72px;
+}
+
+.tt-covers {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tt-covers .chip {
+  cursor: pointer;
+}
+
+.tt-row-actions {
+  display: flex;
+  gap: 2px;
+  justify-content: flex-end;
+}

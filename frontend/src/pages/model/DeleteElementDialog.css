@@ -99,3 +99,21 @@
   flex-wrap: wrap;
   margin-top: 4px;
 }
+
+/* opcao de excluir junto os testes que ficariam sem requisito */
+.ded-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg);
+  cursor: pointer;
+}
+
+.ded-check input {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--wr);
+}

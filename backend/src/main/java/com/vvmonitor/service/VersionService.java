@@ -5,6 +5,7 @@ import com.vvmonitor.api.dto.response.ModelChangesResponse;
 import com.vvmonitor.api.dto.response.VersionResponse;
 import com.vvmonitor.api.dto.response.VersionSummaryResponse;
 import com.vvmonitor.domain.entity.RelationshipType;
+import com.vvmonitor.domain.entity.TestCoverage;
 import com.vvmonitor.domain.enums.MemberRole;
 import com.vvmonitor.domain.exception.InvalidFieldException;
 import com.vvmonitor.domain.exception.NothingToSubmitException;
@@ -17,6 +18,8 @@ import com.vvmonitor.infra.repository.ProjectVersionRepository;
 import com.vvmonitor.infra.repository.ProjectVersionRepository.Latest;
 import com.vvmonitor.infra.repository.RelationshipRepository;
 import com.vvmonitor.infra.repository.RelationshipTypeRepository;
+import com.vvmonitor.infra.repository.TestCaseRepository;
+import com.vvmonitor.infra.repository.TestCoverageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,7 +35,8 @@ import java.util.stream.Collectors;
 
 /**
  * Submissao do modelo como versao imutavel (RF10 + RF17, RNF2) e consulta das versoes (RF18).
- * O que esta pendente (rascunho) e o que difere da ultima versao: adicionado, alterado ou removido.
+ * O que esta pendente (rascunho) e o que difere da ultima versao: adicionado, alterado ou removido, incluindo
+ * os testes e os requisitos que cobrem (RF9).
  */
 @Service
 public class VersionService {
@@ -40,6 +44,8 @@ public class VersionService {
     private final ElementRepository elementRepository;
     private final RelationshipRepository relationshipRepository;
     private final RelationshipTypeRepository typeRepository;
+    private final TestCaseRepository testRepository;
+    private final TestCoverageRepository coverageRepository;
     private final ProjectVersionRepository versionRepository;
     private final ProjectRepository projectRepository;
     private final ProjectAccessService accessService;
@@ -47,19 +53,23 @@ public class VersionService {
 
     @Autowired
     public VersionService(ElementRepository elementRepository, RelationshipRepository relationshipRepository,
-                          RelationshipTypeRepository typeRepository, ProjectVersionRepository versionRepository,
+                          RelationshipTypeRepository typeRepository, TestCaseRepository testRepository,
+                          TestCoverageRepository coverageRepository, ProjectVersionRepository versionRepository,
                           ProjectRepository projectRepository, ProjectAccessService accessService) {
-        this(elementRepository, relationshipRepository, typeRepository, versionRepository, projectRepository,
-                accessService, Clock.systemUTC());
+        this(elementRepository, relationshipRepository, typeRepository, testRepository, coverageRepository,
+                versionRepository, projectRepository, accessService, Clock.systemUTC());
     }
 
     /** Relogio injetavel para testes. */
     VersionService(ElementRepository elementRepository, RelationshipRepository relationshipRepository,
-                   RelationshipTypeRepository typeRepository, ProjectVersionRepository versionRepository,
+                   RelationshipTypeRepository typeRepository, TestCaseRepository testRepository,
+                   TestCoverageRepository coverageRepository, ProjectVersionRepository versionRepository,
                    ProjectRepository projectRepository, ProjectAccessService accessService, Clock clock) {
         this.elementRepository = elementRepository;
         this.relationshipRepository = relationshipRepository;
         this.typeRepository = typeRepository;
+        this.testRepository = testRepository;
+        this.coverageRepository = coverageRepository;
         this.versionRepository = versionRepository;
         this.projectRepository = projectRepository;
         this.accessService = accessService;
@@ -162,8 +172,12 @@ public class VersionService {
     private ModelSnapshot currentSnapshot(UUID projectId) {
         Map<UUID, RelationshipType> types = typeRepository.findAvailableFor(projectId).stream()
                 .collect(Collectors.toMap(RelationshipType::getId, Function.identity()));
+        Map<UUID, List<UUID>> coverage = coverageRepository.findAllOfProject(projectId).stream()
+                .collect(Collectors.groupingBy(TestCoverage::getTestId,
+                        Collectors.mapping(TestCoverage::getElementId, Collectors.toList())));
         return ModelSnapshot.of(elementRepository.findAllByProjectId(projectId),
-                relationshipRepository.findAllByProjectIdOrderByCreatedAt(projectId), types);
+                relationshipRepository.findAllByProjectIdOrderByCreatedAt(projectId), types,
+                testRepository.findAllByProjectId(projectId), coverage);
     }
 
     private State state(UUID projectId) {

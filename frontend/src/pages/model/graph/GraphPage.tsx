@@ -8,15 +8,16 @@ import {
   type NodeMouseHandler,
   type EdgeMouseHandler,
   type NodeChange,
+  type OnNodeDrag,
 } from '@xyflow/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
-import type { Element, ElementKind, Relationship, RelationshipType } from '../../../api/types'
+import type { Element, ElementKind, Relationship, RelationshipType, TestCase } from '../../../api/types'
 import { FieldError } from '../../../components/FieldError'
 import { PlusIcon, SearchIcon } from '../../../components/icons'
 import { RelationLine } from '../../../components/RelationLine'
 import { useProject } from '../../../layouts/useProject'
-import { layoutGraph } from '../../../utils/graphLayout'
+import { layoutGraph, nodeWidth, testNodeWidth } from '../../../utils/graphLayout'
 import { KINDS } from '../../../utils/labels'
 import { sortTypes, typeMeta } from '../../../utils/relationships'
 import { AddRelationshipModal } from '../AddRelationshipModal'
@@ -28,6 +29,10 @@ import { RemoveRelationshipDialog } from '../RemoveRelationshipDialog'
 import { useModelData } from '../useModelData'
 import { ElementNode, type ElementNodeType } from './ElementNode'
 import { RelationEdge, type RelationEdgeType } from './RelationEdge'
+import { TestEdge, type TestEdgeType } from './TestEdge'
+import { TestNode, type TestNodeType } from './TestNode'
+import { TestDialog } from '../tests/TestDialog'
+import { useGraphPositions } from './useGraphPositions'
 import './GraphPage.css'
 
 /** Zoom maximo ao enquadrar (ao abrir e no botao): evita nos gigantes em modelos pequenos. */
@@ -35,14 +40,24 @@ const FIT_OPTIONS = { padding: 0.2, maxZoom: 1.5 }
 const MIN_ZOOM = 0.2
 const MAX_ZOOM = 2.5
 
-const nodeTypes = { element: ElementNode }
-const edgeTypes = { relation: RelationEdge }
+const nodeTypes = { element: ElementNode, test: TestNode }
+const edgeTypes = { relation: RelationEdge, covers: TestEdge }
+
+type GraphNode = ElementNodeType | TestNodeType
+type GraphEdge = RelationEdgeType | TestEdgeType
+
+/** Prefixo dos nos de teste, para nao colidir com os ids dos elementos. */
+const TEST_NODE = 'test:'
+
+/** Id do elemento ou do teste por tras de um no do grafo (o usado nas posicoes salvas). */
+const nodeIdOf = (id: string) => (id.startsWith(TEST_NODE) ? id.slice(TEST_NODE.length) : id)
 
 type GraphAction =
   | { mode: 'add'; origin: Element }
   | { mode: 'pair'; source: Element; target: Element }
   | { mode: 'edit'; relationship: Relationship }
   | { mode: 'remove'; relationship: Relationship }
+  | { mode: 'editTest'; test: TestCase }
 
 /** Representacao visual em grafo (RF11, RF12) do modelo atual, inclusive rascunhos. */
 export function GraphPage() {
@@ -55,12 +70,16 @@ export function GraphPage() {
 
 function GraphView() {
   const project = useProject()
-  const { elementsQuery, relationshipsQuery, elements, relationships, changes } = useModelData(project.id)
-  // o layout depende das relacoes: so monta o grafo com elementos e relacoes carregados
-  const ready = elementsQuery.isSuccess && relationshipsQuery.isSuccess
+  const { elementsQuery, relationshipsQuery, testsQuery, elements, relationships, tests, changes } = useModelData(project.id)
+  // o layout depende das relacoes e dos testes: so monta o grafo com tudo carregado
+  // RF21: posicoes arrumadas pelos membros, salvas ao soltar um no (proprietario e editores)
+  const savedPositions = useGraphPositions(project.id, project.role !== 'VIEWER')
+  const ready = elementsQuery.isSuccess && relationshipsQuery.isSuccess && testsQuery.isSuccess && savedPositions.ready
   const [params, setParams] = useSearchParams()
   const [hiddenKinds, setHiddenKinds] = useState<Set<ElementKind>>(new Set())
   const [showCoverage, setShowCoverage] = useState(true)
+  // RF9: testes como nos ligados aos requisitos que cobrem
+  const [showTests, setShowTests] = useState(true)
   const [action, setAction] = useState<GraphAction | null>(null)
   const canEdit = project.role !== 'VIEWER'
   const base = `/projetos/${project.id}`
@@ -74,13 +93,33 @@ function GraphView() {
     [relationships, visibleIds],
   )
 
-  // layout automatico; arrastar e permitido, mas a posicao nao e salva (recalcula quando o modelo muda)
-  const positions = useMemo(() => layoutGraph(visible, visibleRelations), [visible, visibleRelations])
-  const [nodes, setNodes, onNodesChange] = useNodesState<ElementNodeType>([])
-  // posicoes que o usuario arrastou nesta sessao; os demais nos seguem o layout automatico
+  // testes visiveis: os que cobrem algum requisito visivel, e os que ficaram sem requisito
+  const visibleTests = useMemo(
+    () => (showTests ? tests.filter((t) => t.covers.length === 0 || t.covers.some((e) => visibleIds.has(e.id))) : []),
+    [tests, showTests, visibleIds],
+  )
+
+  // layout automatico, usado por quem ainda nao foi arrumado a mao (as posicoes salvas tem prioridade)
+  const positions = useMemo(
+    () =>
+      layoutGraph(
+        [
+          ...visible.map((e) => ({ id: e.id, width: nodeWidth(e) })),
+          ...visibleTests.map((t) => ({ id: TEST_NODE + t.id, width: testNodeWidth(t.code) })),
+        ],
+        [
+          ...visibleRelations.map((r) => ({ source: r.source.id, target: r.target.id })),
+          ...visibleTests.flatMap((t) => t.covers.map((e) => ({ source: TEST_NODE + t.id, target: e.id }))),
+        ],
+      ),
+    [visible, visibleRelations, visibleTests],
+  )
+  const [nodes, setNodes, onNodesChange] = useNodesState<GraphNode>([])
+  // posicoes arrastadas nesta tela (valem tambem para quem so visualiza); depois, as salvas no projeto;
+  // os demais nos (ex.: recem-cadastrados) seguem o layout automatico
   const dragged = useRef(new Map<string, { x: number; y: number }>())
 
-  const handleNodesChange = (changes: NodeChange<ElementNodeType>[]) => {
+  const handleNodesChange = (changes: NodeChange<GraphNode>[]) => {
     changes.forEach((ch) => {
       if (ch.type === 'position' && ch.dragging && ch.position) dragged.current.set(ch.id, ch.position)
     })
@@ -88,20 +127,33 @@ function GraphView() {
   }
 
   useEffect(() => {
-    setNodes(
-      visible.map((element) => ({
+    const at = (id: string) =>
+      dragged.current.get(id) ?? savedPositions.saved.get(nodeIdOf(id)) ?? positions.get(id) ?? { x: 0, y: 0 }
+    setNodes([
+      ...visible.map((element) => ({
         id: element.id,
         type: 'element' as const,
-        position: dragged.current.get(element.id) ?? positions.get(element.id) ?? { x: 0, y: 0 },
+        position: at(element.id),
         data: { element, selected: element.id === selectedId, showCoverage },
       })),
-    )
-  }, [visible, positions, selectedId, showCoverage, setNodes])
+      ...visibleTests.map((test) => ({
+        id: TEST_NODE + test.id,
+        type: 'test' as const,
+        position: at(TEST_NODE + test.id),
+        data: { test, highlighted: !!selectedId && test.covers.some((e) => e.id === selectedId) },
+      })),
+    ])
+  }, [visible, visibleTests, positions, savedPositions.saved, selectedId, showCoverage, setNodes])
+
+  // ao soltar: salva a posicao do no (e dos demais, se arrastou uma selecao de varios)
+  const onNodeDragStop: OnNodeDrag<GraphNode> = (_, __, moved) => {
+    moved.forEach((n) => savedPositions.queue(nodeIdOf(n.id), n.position))
+  }
 
   // varias relacoes entre o mesmo par ganham desvios diferentes para nao se sobreporem
-  const edges = useMemo<RelationEdgeType[]>(() => {
+  const edges = useMemo<GraphEdge[]>(() => {
     const seen = new Map<string, number>()
-    return visibleRelations.map((r) => {
+    const relationEdges: RelationEdgeType[] = visibleRelations.map((r) => {
       const key = [r.source.id, r.target.id].sort().join('|')
       const index = seen.get(key) ?? 0
       seen.set(key, index + 1)
@@ -118,7 +170,19 @@ function GraphView() {
         },
       }
     })
-  }, [visibleRelations, selectedId])
+    const coverageEdges: TestEdgeType[] = visibleTests.flatMap((t) =>
+      t.covers
+        .filter((e) => visibleIds.has(e.id))
+        .map((e) => ({
+          id: `cov:${t.id}:${e.id}`,
+          source: TEST_NODE + t.id,
+          target: e.id,
+          type: 'covers' as const,
+          data: { highlighted: e.id === selectedId, pending: t.submissionStatus === 'DRAFT' },
+        })),
+    )
+    return [...relationEdges, ...coverageEdges]
+  }, [visibleRelations, visibleTests, visibleIds, selectedId])
 
   const usedTypes = useMemo(() => {
     const map = new Map<string, RelationshipType>()
@@ -135,8 +199,16 @@ function GraphView() {
       return next
     })
 
-  const onNodeClick: NodeMouseHandler<ElementNodeType> = (_, node) => select(node.id)
-  const onEdgeClick: EdgeMouseHandler<RelationEdgeType> = (_, edge) => {
+  // clicar num teste abre a edicao dele (quem so visualiza ve a descricao ao passar o mouse)
+  const onNodeClick: NodeMouseHandler<GraphNode> = (_, node) => {
+    if (node.type === 'test') {
+      if (canEdit) setAction({ mode: 'editTest', test: node.data.test })
+      return
+    }
+    select(node.id)
+  }
+  const onEdgeClick: EdgeMouseHandler<GraphEdge> = (_, edge) => {
+    if (edge.type !== 'relation') return
     const r = edge.data?.relationship
     if (!r) return
     const source = elements.find((e) => e.id === r.source.id)
@@ -181,6 +253,9 @@ function GraphView() {
                   <marker id="gr-arrow-hl" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
                     <path d="M0,0 L10,5 L0,10 z" className="gr-arrow hl" />
                   </marker>
+                  <marker id="gr-arrow-test" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                    <path d="M0,0 L10,5 L0,10 z" className="gr-arrow test" />
+                  </marker>
                 </defs>
               </svg>
 
@@ -192,6 +267,7 @@ function GraphView() {
                   nodeTypes={nodeTypes}
                   edgeTypes={edgeTypes}
                   onNodesChange={handleNodesChange}
+                  onNodeDragStop={onNodeDragStop}
                   onNodeClick={onNodeClick}
                   onEdgeClick={onEdgeClick}
                   onPaneClick={() => select(null)}
@@ -218,7 +294,7 @@ function GraphView() {
                     {k.plural}
                   </button>
                 ))}
-                <button type="button" className="gr-tg" aria-pressed={false} disabled title="Em breve (cadastro de testes, RF9)">
+                <button type="button" className="gr-tg" aria-pressed={showTests} onClick={() => setShowTests((v) => !v)}>
                   <span className="gr-sw t" />
                   Testes
                 </button>
@@ -241,6 +317,9 @@ function GraphView() {
                 <div className="gr-legend-row">
                   <span className="gr-lg"><span className="gr-cov" />Com teste</span>
                   <span className="gr-lg"><span className="gr-cov no" />Sem teste</span>
+                  {showTests && tests.length > 0 && (
+                    <span className="gr-lg"><span className="gr-test-sample" />Testa</span>
+                  )}
                   <span className="gr-lg"><span className="gr-pending-sample" />Rascunho</span>
                 </div>
               </div>
@@ -255,6 +334,7 @@ function GraphView() {
           element={selected}
           elements={elements}
           relationships={relationships}
+          tests={tests}
           canEdit={canEdit}
           onSelect={select}
           emptyHint="Clique num elemento do grafo para ver os detalhes e os vínculos dele."
@@ -282,6 +362,16 @@ function GraphView() {
           onAdd={() => setAction({ mode: 'add', origin: action.source })}
           onEdit={(relationship) => setAction({ mode: 'edit', relationship })}
           onRemove={(relationship) => setAction({ mode: 'remove', relationship })}
+        />
+      )}
+
+      {action?.mode === 'editTest' && (
+        <TestDialog
+          projectId={project.id}
+          elements={elements}
+          tests={tests}
+          test={action.test}
+          onClose={() => setAction(null)}
         />
       )}
 

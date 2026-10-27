@@ -1,12 +1,15 @@
 import { useMemo, useState } from 'react'
 import { Navigate, useNavigate, useSearchParams } from 'react-router'
-import type { Element } from '../../api/types'
+import type { Element, TestCase } from '../../api/types'
 import { FieldError } from '../../components/FieldError'
 import { AlertIcon, PlusIcon, SearchIcon } from '../../components/icons'
 import { useProject } from '../../layouts/useProject'
 import { ElementFormDrawer } from './ElementFormDrawer'
 import { ElementPanel } from './ElementPanel'
 import { ElementTable } from './ElementTable'
+import { DeleteTestDialog } from './tests/DeleteTestDialog'
+import { TestDialog } from './tests/TestDialog'
+import { TestTable } from './tests/TestTable'
 import { KindTabs, type KindFilter } from './KindTabs'
 import { ModelHeader } from './ModelHeader'
 import { useModelData } from './useModelData'
@@ -30,10 +33,20 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const [filter, setFilter] = useState<KindFilter>('all')
+  // RF9: aba Testes, no lugar da tabela de elementos
+  const [showTests, setShowTests] = useState(false)
+  const [testAction, setTestAction] = useState<{ mode: 'new' } | { mode: 'edit' | 'delete'; test: TestCase } | null>(null)
   const [search, setSearch] = useState('')
   const [onlyUntested, setOnlyUntested] = useState(false)
 
-  const { elementsQuery: elements, elements: all, relationships: relations, changes } = useModelData(project.id)
+  const {
+    elementsQuery: elements,
+    testsQuery,
+    elements: all,
+    relationships: relations,
+    tests,
+    changes,
+  } = useModelData(project.id)
   const canEdit = project.role !== 'VIEWER'
   const selected = all.find((e) => e.id === params.get('el')) ?? null
 
@@ -51,6 +64,13 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
         (!term || normalize(`${e.code} ${e.description}`).includes(term)),
     )
   }, [all, filter, search, onlyUntested])
+
+  const testRows = useMemo(() => {
+    const term = normalize(search.trim())
+    return tests.filter(
+      (t) => !term || normalize(`${t.code} ${t.description} ${t.covers.map((e) => e.code).join(' ')}`).includes(term),
+    )
+  }, [tests, search])
 
   // quem so pode visualizar nao abre o formulario, nem pelo endereco direto
   // (mantem o elemento selecionado, se houver)
@@ -78,8 +98,7 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
               </div>
               <span className="hint">
                 {requirements.length - untested.length} de {requirements.length}{' '}
-                {requirements.length === 1 ? 'requisito tem' : 'requisitos têm'} ao menos um teste associado. Regras de
-                negócio não entram na conta.
+                {requirements.length === 1 ? 'requisito tem' : 'requisitos têm'} ao menos um teste associado.
               </span>
             </div>
             {untested.length > 0 && (
@@ -97,7 +116,18 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
           </div>
 
           <div className="md-toolbar">
-            <KindTabs value={filter} onChange={setFilter} elements={all} />
+            <KindTabs
+              value={showTests ? null : filter}
+              onChange={(value) => {
+                setFilter(value)
+                setShowTests(false)
+              }}
+              elements={all}
+            >
+              <button type="button" aria-pressed={showTests} onClick={() => setShowTests(true)}>
+                Testes <span className="n">{tests.length}</span>
+              </button>
+            </KindTabs>
             <div className="md-search">
               <SearchIcon />
               <label htmlFor="rq-busca" className="sr-only">Buscar por ID ou descrição</label>
@@ -110,14 +140,40 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
                 onChange={(e) => setSearch(e.target.value)}
               />
             </div>
-            {canEdit && (
-              <button className="btn p" type="button" onClick={() => navigate(`${base}/elementos/novo`)}>
-                <PlusIcon />
-                Novo elemento
-              </button>
-            )}
+            {canEdit &&
+              (showTests ? (
+                <button className="btn p" type="button" onClick={() => setTestAction({ mode: 'new' })}>
+                  <PlusIcon />
+                  Novo teste
+                </button>
+              ) : (
+                <button className="btn p" type="button" onClick={() => navigate(`${base}/elementos/novo`)}>
+                  <PlusIcon />
+                  Novo elemento
+                </button>
+              ))}
           </div>
 
+          {showTests ? (
+            <TestTable
+              tests={testRows}
+              canEdit={canEdit}
+              onEdit={(test) => setTestAction({ mode: 'edit', test })}
+              onDelete={(test) => setTestAction({ mode: 'delete', test })}
+              onSelectElement={(id) => select(id)}
+            >
+              {testsQuery.isPending && <p className="hint md-empty">Carregando testes…</p>}
+              {testsQuery.isSuccess && tests.length === 0 && (
+                <div className="md-empty">
+                  <strong>Nenhum teste cadastrado ainda.</strong>
+                  <span className="hint">Testes cobrem requisitos funcionais e não funcionais e alimentam a cobertura.</span>
+                </div>
+              )}
+              {tests.length > 0 && testRows.length === 0 && (
+                <p className="hint md-empty">Nenhum teste encontrado com essa busca.</p>
+              )}
+            </TestTable>
+          ) : (
           <ElementTable elements={rows} selectedId={selected?.id ?? null} onSelect={(id) => select(id)}>
             {elements.isPending && <p className="hint md-empty">Carregando elementos…</p>}
             {elements.isError && <div className="md-empty"><FieldError>{elements.error.message}</FieldError></div>}
@@ -137,6 +193,7 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
               <p className="hint md-empty">Nenhum elemento encontrado com esses filtros.</p>
             )}
           </ElementTable>
+          )}
         </section>
 
         <ElementPanel
@@ -144,11 +201,26 @@ export function ModelPage({ newElement = false }: ModelPageProps) {
           element={selected}
           elements={all}
           relationships={relations}
+          tests={tests}
           canEdit={canEdit}
           onSelect={select}
           emptyHint="Selecione um elemento na lista para ver os detalhes, os relacionamentos e os testes."
         />
       </div>
+
+      {testAction && testAction.mode !== 'delete' && (
+        <TestDialog
+          projectId={project.id}
+          elements={all}
+          tests={tests}
+          test={testAction.mode === 'edit' ? testAction.test : undefined}
+          onClose={() => setTestAction(null)}
+        />
+      )}
+
+      {testAction?.mode === 'delete' && (
+        <DeleteTestDialog projectId={project.id} test={testAction.test} onClose={() => setTestAction(null)} />
+      )}
 
       {newElement && (
         <ElementFormDrawer

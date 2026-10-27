@@ -5,6 +5,7 @@ import com.vvmonitor.api.dto.response.ModelChangesResponse;
 import com.vvmonitor.api.dto.response.VersionResponse;
 import com.vvmonitor.api.dto.response.VersionSummaryResponse;
 import com.vvmonitor.infra.security.AuthenticatedUser;
+import com.vvmonitor.service.RestoreService;
 import com.vvmonitor.service.VersionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -27,9 +28,11 @@ import java.util.UUID;
 public class VersionController {
 
     private final VersionService versionService;
+    private final RestoreService restoreService;
 
-    public VersionController(VersionService versionService) {
+    public VersionController(VersionService versionService, RestoreService restoreService) {
         this.versionService = versionService;
+        this.restoreService = restoreService;
     }
 
     /** O que mudou desde a ultima versao (adicionados, alterados e removidos). */
@@ -60,6 +63,17 @@ public class VersionController {
                                 @PathVariable UUID projectId,
                                 @PathVariable int number) {
         return versionService.find(projectId, number, user.id());
+    }
+
+    /**
+     * RF22 (proposto): o modelo atual volta a ser igual ao da versao; nao cria versao (fica pendente).
+     */
+    @PostMapping("/versions/{number}/restore")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void restore(@AuthenticationPrincipal AuthenticatedUser user,
+                        @PathVariable UUID projectId,
+                        @PathVariable int number) {
+        restoreService.restore(projectId, number, user.id());
     }
 
     /**

@@ -1,4 +1,4 @@
-import type { ChangeGroup, ElementSnapshot, VersionedRelationship } from '../../api/types'
+import type { ChangeGroup, ElementSnapshot, VersionedRelationship, VersionedTest } from '../../api/types'
 import { kindInfo, priorityInfo } from '../../utils/labels'
 import { typeMeta } from '../../utils/relationships'
 import './ModelChangesView.css'
@@ -6,23 +6,24 @@ import './ModelChangesView.css'
 interface ModelChangesViewProps {
   elements: ChangeGroup<ElementSnapshot>
   relationships: ChangeGroup<VersionedRelationship>
+  tests: ChangeGroup<VersionedTest>
 }
 
 /**
- * Mudancas no modelo em tres grupos (adicionados, alterados e removidos), separando elementos e relacoes.
+ * Mudancas no modelo em tres grupos (adicionados, alterados e removidos), separando elementos, relacoes e testes.
  * Usado ao submeter (desde a ultima versao) e ao comparar versoes.
  */
-export function ModelChangesView({ elements, relationships }: ModelChangesViewProps) {
+export function ModelChangesView({ elements, relationships, tests }: ModelChangesViewProps) {
   const groups = [
-    { key: 'added', title: 'Adicionados', els: elements.added, rels: relationships.added },
-    { key: 'modified', title: 'Alterados', els: elements.modified, rels: relationships.modified },
-    { key: 'removed', title: 'Removidos', els: elements.removed, rels: relationships.removed },
+    { key: 'added', title: 'Adicionados', els: elements.added, rels: relationships.added, tests: tests.added },
+    { key: 'modified', title: 'Alterados', els: elements.modified, rels: relationships.modified, tests: tests.modified },
+    { key: 'removed', title: 'Removidos', els: elements.removed, rels: relationships.removed, tests: tests.removed },
   ] as const
 
   return (
     <div className="chg">
       {groups.map((g) => {
-        const count = g.els.length + g.rels.length
+        const count = g.els.length + g.rels.length + g.tests.length
         if (count === 0) return null
         return (
           <section key={g.key} className={`chg-group ${g.key}`}>
@@ -47,6 +48,13 @@ export function ModelChangesView({ elements, relationships }: ModelChangesViewPr
                   ))
                 : (g.rels as VersionedRelationship[]).map((r) => (
                     <li key={r.id}><RelationLineText relationship={r} /></li>
+                  ))}
+              {g.key === 'modified'
+                ? tests.modified.map(({ before, after }) => (
+                    <li key={after.id}><ModifiedTest before={before} after={after} /></li>
+                  ))
+                : (g.tests as VersionedTest[]).map((t) => (
+                    <li key={t.id}><TestLine test={t} /></li>
                   ))}
             </ul>
           </section>
@@ -80,6 +88,39 @@ function ModifiedElement({ before, after }: { before: ElementSnapshot; after: El
         {before.priority !== after.priority && (
           <span className="hint">
             Prioridade: <s>{prio(before)}</s> <span className="chg-arrow">→</span> {prio(after)}
+          </span>
+        )}
+      </span>
+    </span>
+  )
+}
+
+const codes = (t: VersionedTest) => (t.covers.length === 0 ? 'sem requisito' : t.covers.map((e) => e.code).join(', '))
+
+function TestLine({ test }: { test: VersionedTest }) {
+  return (
+    <span className="chg-el">
+      <span className="chip t">{test.code}</span>
+      <span className="chg-desc" title={test.description}>{test.description}</span>
+      <span className="hint chg-covers">cobre {codes(test)}</span>
+    </span>
+  )
+}
+
+/** Teste alterado: descricao e/ou requisitos cobertos, antes riscado e depois. */
+function ModifiedTest({ before, after }: { before: VersionedTest; after: VersionedTest }) {
+  return (
+    <span className="chg-el chg-modified">
+      <span className="chip t">{after.code}</span>
+      <span className="chg-diff">
+        {before.description !== after.description && (
+          <span>
+            <s className="chg-old">{before.description}</s> <span className="chg-arrow">→</span> {after.description}
+          </span>
+        )}
+        {codes(before) !== codes(after) && (
+          <span className="hint">
+            Cobre: <s>{codes(before)}</s> <span className="chg-arrow">→</span> {codes(after)}
           </span>
         )}
       </span>

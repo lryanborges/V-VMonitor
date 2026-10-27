@@ -80,7 +80,7 @@ export function ShareProjectDialog({ project, onClose }: ShareProjectDialogProps
       icon={<MembersIcon />}
       subtitle={
         isOwner
-          ? 'Quem for adicionado pelo e-mail passa a editar o projeto. A pessoa precisa ter uma conta no V&V Monitor.'
+          ? 'Quem for adicionado pelo e-mail passa a editar o projeto. A pessoa precisa ter uma conta no ReqTrace Monitor.'
           : 'Só o proprietário adiciona pessoas a este projeto.'
       }
       onClose={onClose}
