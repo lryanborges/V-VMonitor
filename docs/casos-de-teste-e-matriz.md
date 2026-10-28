@@ -160,7 +160,7 @@ Gerado a partir do projeto de exemplo "ReqTrace Monitor" (conta ryan@gmail.com),
 | RNF10 | Obrigatório | — | — | Sem teste |
 | RNF11 | Desejável | — | — | Sem teste |
 
-**Cobertura de testes:** 12 de 30 requisitos (40%). RF17 e RF19 foram removidos na v1.3 e não aparecem.
+**Cobertura de testes:** 12 de 31 requisitos (39%). RF17 e RF19 foram removidos na v1.3 e não aparecem.
 
 ## 3. Matriz de rastreabilidade: relacionamentos entre elementos
 
